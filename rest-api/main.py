@@ -103,9 +103,7 @@ def add_user():
     name = request.args.get('name')
     ip = request.args.get('ip')
     note = request.args.get('note') or None
-    print(request.args.get('modder'))
     modder = 1 if (request.args.get('modder') == "1" or request.args.get('modder') == "true") else 0
-    print(modder)
     date = datetime.datetime.now()
     if (not check_if_exists(rid)):
         values = {  # https://stackoverflow.com/a/16698310/15384495
