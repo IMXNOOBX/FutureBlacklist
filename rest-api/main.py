@@ -32,6 +32,16 @@ with con:
             first_seen DATE
         );
     """)
+    # times_seen
+    # risk
+    # whitelist
+    
+    # another table with the uploader info
+    # name
+    # rid
+    # ip
+    # table or something that references all added users
+    # key_auth
 
 @app.route('/')
 def index():
