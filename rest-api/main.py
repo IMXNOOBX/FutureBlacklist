@@ -42,11 +42,6 @@ def index():
                         "GET add user": "/api/v1/insert?rid=<rid>&name=<name>&ip=<ip>&note=<note>&modder=<modder>",
                     }})
 
-# @app.route("/slow")
-# @limiter.limit("1 per 5 minutes")
-# def slow():
-#     return ":("
-
 def check_if_exists(rid):
     try:
         lock.acquire(True)
@@ -56,7 +51,6 @@ def check_if_exists(rid):
         return False if len(check) == 0 else True
     finally:
         lock.release()
-
 
 @app.route('/api/v1/user/<rid>')
 @limiter.limit("100/minute")
