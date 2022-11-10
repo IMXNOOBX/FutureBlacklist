@@ -51,9 +51,10 @@ with con:
 def index():
     return jsonify({'success': True,
                     'endpoints': {
-                        "get_user": "/api/v1/user/<rid>",
-                        "user_exists": "/api/v1/users/exist/<rid>",
-                        "add_user_private": "/api/v1/insert?rid=<rid>&name=<name>&ip=<ip>&note=<note>&modder=<modder>",
+                        "v1_get_user": "/api/v1/user/<rid>",
+                        "v1_user_exists": "/api/v1/users/exist/<rid>",
+                        # "v0_add_user_private": "/api/v0/insert?key=<key>&rid=<rid>&name=<name>&ip=<ip>&note=<note>&modder=<modder>&risk=<risk>
+                        # "v0_get_user": "/api/v0/user/<rid>",
                     }})
 
 def check_if_exists(rid):
@@ -80,8 +81,9 @@ def check_user_key(key):
     finally:
         lock.release()
 
+# http://127.0.0.1:80/api/v1/user/<rid>
 @app.route('/api/v1/user/<rid>')
-# @limiter.limit("100/minute")
+@limiter.limit("100/minute")
 def get_user(rid):
     try:
         lock.acquire(True)
@@ -119,18 +121,18 @@ def get_user(rid):
     finally:
         lock.release()
 
+# http://127.0.0.1:80/api/v1/user/exist/<rid>
 @app.route('/api/v1/user/exist/<rid>')
-# @limiter.limit("100/minute")
+@limiter.limit("100/minute")
 def exist_user(rid):
     return jsonify({
             'success': True,
             'exist': check_if_exists(rid),
         })
 
-
-# http://127.0.0.1:5000/api/v1/insert?rid=8167293698&name=ADaDadas&ip=1.1.1.1
+# http://127.0.0.1:80/api/v0/insert?key=<key>&rid=<rid>&name=<name>&ip=<ip>&note=<note>&modder=<modder>&risk=<risk>
 @app.route('/api/v0/insert')
-# @limiter.limit("100/minute")
+@limiter.limit("100/minute")
 def add_user():
     key = request.args.get('key')
     rid = request.args.get('rid')
@@ -150,7 +152,7 @@ def add_user():
         return jsonify({
             'success': False,
         }), HTTPStatus.BAD_REQUEST
-    db.execute(f"UPDATE USER SET ip=? WHERE key_auth=?", (ip, key)) 
+    # db.execute(f"UPDATE USER SET ip=? WHERE key_auth=?", (request_ip, key)) 
     if (not check_if_exists(rid)):
         values = {  # https://stackoverflow.com/a/16698310/15384495
             'rid': rid, 
@@ -186,8 +188,9 @@ def add_user():
             'message': f'Player {name} already exists, Updating player status!'
         })
 
+# http://127.0.0.1:80/api/v0/user/<rid>?key=<key>
 @app.route('/api/v0/user/<rid>')
-# @limiter.limit("100/minute")
+@limiter.limit("100/minute")
 def get_all_user(rid):
     key = request.args.get('key')
     if (not check_user_key(key)): # Check uploader key
