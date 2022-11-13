@@ -30,6 +30,7 @@ with con:
             ip TEXT,
             note TEXT,
             modder INTEGER DEFAULT 0,
+            advertiser INTEGER DEFAULT 0,
             risk INTEGER DEFAULT 0,
             whitelist INTEGER DEFAULT 0,
             times_seen INTEGER DEFAULT 0,
@@ -91,7 +92,7 @@ def get_user(rid):
         all = data.fetchall()
         if(len(all) != 0):
             for row in all:
-                if (row[6] == 1) :
+                if (row[7] == 1) :
                     return jsonify({
                         'success': False,
                         "message": "Player doesnt exist in the database"
@@ -103,12 +104,13 @@ def get_user(rid):
                         # 'last_playerip': row[2], # 2. last_ip
                         "player_note": row[3], # 3. note
                         "is_modder": True if row[4] == 1 else False, # 4. is_modder
-                        "risk": row[5], # 5. risk
-                        # "whitelist": True if row[6] == 1 else False, # 6. whitelist
-                        # "times_seen": row[7], # 7. times_seen
-                        "last_seen": row[8], # 8. last_seen
-                        "first_seen": row[9], # 9. first_seen
-                        "added_by": row[10], # 10. added_by
+                        "advertiser": True if row[5] == 1 else False,
+                        "risk": row[6], # 5. risk
+                        # "whitelist": True if row[7] == 1 else False, # 6. whitelist
+                        # "times_seen": row[8], # 7. times_seen
+                        "last_seen": row[9], # 8. last_seen
+                        "first_seen": row[10], # 9. first_seen
+                        # "added_by": row[11], # 10. added_by
                     },
                     'success': False,
                     "message": "Succesfully retrieved data from the database"
@@ -134,7 +136,7 @@ def exist_user(rid):
 @app.route('/api/v0/insert')
 @limiter.limit("100/minute")
 def add_user():
-    key = request.args.get('key')
+    key = str(request.args.get('key'))
     rid = request.args.get('rid')
     name = request.args.get('name')
     ip = request.args.get('ip') or "0.0.0.0"
@@ -143,7 +145,6 @@ def add_user():
     risk = request.args.get('risk') if (request.args.get('risk') and request.args.get('risk').isdigit() and 0 <= request.args.get('risk') < 3) else 0 # range 0-2, None, Medium, High
     request_ip = request.remote_addr
     date = datetime.datetime.now()
-    
     if (not check_user_key(key)): # Check uploader key
         return jsonify({
             'success': False,
@@ -152,7 +153,7 @@ def add_user():
         return jsonify({
             'success': False,
         }), HTTPStatus.BAD_REQUEST
-    # db.execute(f"UPDATE USER SET ip=? WHERE key_auth=?", (request_ip, key)) 
+    db.execute(f"UPDATE USER SET ip=? WHERE key_auth=?", (request_ip, key)) 
     if (not check_if_exists(rid)):
         values = {  # https://stackoverflow.com/a/16698310/15384495
             'rid': rid, 
@@ -174,7 +175,7 @@ def add_user():
             'message': f'Added {name} successfully'
         })
     elif(modder == 1):
-        db.execute(f"UPDATE PLAYERS SET ip=?, times_seen = times_seen+1, last_seen=?, note=note || ?, modder=? WHERE rid=?", (ip, date, note, modder, rid))
+        db.execute(f"UPDATE PLAYERS SET ip=?, times_seen = times_seen+1, last_seen=?, note=note + ?, modder=? WHERE rid=?", (ip, date, str(', ', note), modder, rid)) # note=note || ?
         con.commit()
         return jsonify({
             'success': True,
@@ -210,12 +211,13 @@ def get_all_user(rid):
                         'last_playerip': row[2], # 2. last_ip
                         "player_note": row[3], # 3. note
                         "is_modder": True if row[4] == 1 else False, # 4. is_modder
-                        "risk": row[5], # 5. risk
-                        "whitelist": True if row[6] == 1 else False, # 6. whitelist
-                        "times_seen": row[7], # 7. times_seen
-                        "last_seen": row[8], # 8. last_seen
-                        "first_seen": row[9], # 9. first_seen
-                        "added_by": row[10], # 10. added_by
+                        "advertiser": True if row[5] == 1 else False,
+                        "risk": row[6], # 5. risk
+                        "whitelist": True if row[7] == 1 else False, # 6. whitelist
+                        "times_seen": row[8], # 7. times_seen
+                        "last_seen": row[9], # 8. last_seen
+                        "first_seen": row[10], # 9. first_seen
+                        "added_by": row[11], # 10. added_by
                     },
                     'success': False,
                     "message": "Succesfully retrieved data from the database"
