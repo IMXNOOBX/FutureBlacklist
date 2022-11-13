@@ -15,7 +15,7 @@ local functions = {
 		return result
 	end,
 	api_player_exists = function(rid)
-		http.get("http://127.0.0.1:5000/api/v1/users/exist/" + rid, function(code, headers, content)
+		http.get("http://127.0.0.1/api/v1/users/exist/" + rid, function(code, headers, content)
 			if(code ~= 200) then return false end
 			string.match(content, "true")
 		end)
@@ -26,7 +26,7 @@ local functions = {
 menu.divider(menu.my_root(), 'FutureBlackList')
 menu.action(menu.my_root(), "Check Player", {}, "", function()
 	util.toast('Sending request')
-    async_http.init("127.0.0.1", "/api/v1/user/218321285", function(body) 
+    async_http.init("panel.imxnoobx.xyz:25565", "/api/v1/user/8167293698", function(body) 
 		util.toast('success')   
 		print(body)
 	end, function() 
