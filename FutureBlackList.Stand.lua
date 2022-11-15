@@ -76,6 +76,24 @@ local functions = {
 		NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, settings.friend_handle_ptr, 13)
 		return NETWORK.NETWORK_IS_FRIEND(settings.friend_handle_ptr)
 	end,
+	player_join_reaction = function(pid, type)
+		local reaction = type == 1 and settings.m_opt or settings.adv_opt
+
+		if (reaction == 1) then
+			util.create_thread(function() 
+                menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on')
+				util.yield(60000)
+				menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'off')
+				util.stop_thread()
+			end)
+		elseif (reaction == 2) then
+			menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on')
+		elseif (reaction == 3) then
+			menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on') -- breakup/Desync
+		end
+			
+	
+	end
 }
 local root = menu.my_root()
 local admin_tab = menu.list(root, 'Developer Options', {}, '', function() end)
@@ -120,7 +138,7 @@ local devs = {
 	block_joinm = {
 		"Stand History",
 		"Desync (Coded)",
-		"Desync / Breakup"
+		"Desync/Breakup"
 	},
 	block_joinm_opt = 1,
 }
@@ -155,7 +173,16 @@ end)
 players.on_join(function(pid) 
 	if players.user() == pid then return end
 	if settings.ignore_friends == true and funtions.is_friends(pid) then return end
+	local rid = players.get_rockstar_id(pid)
+	local name = players.get_name(pid)
+	local ip = players.get_connect_ip(pid)
+	local modder = players.is_marked_as_modder_or_admin(pid)
 
-
+	local result = functions.api_get_player(rid)
+	if(result == 1) or (result == 2) then
+		functions.player_join_reaction(pid, result)
+	elseif (result == -1) then
+		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
+	end
 end)
 -- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.
