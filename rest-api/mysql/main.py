@@ -1,8 +1,9 @@
-
+import sys
 import datetime
 import json
 import threading
 from http import HTTPStatus
+
 
 # import sqlite3 as sl
 import mysql.connector
@@ -26,16 +27,19 @@ lock = threading.Lock()
 # db = con.cursor()
 
 con = mysql.connector.connect(
-    host="localhost",
+    host="127.0.0.1",
     user="Future5",
     password="GNB82hBjtA54P8ey",
-    database="future5"
+    database="future5",
+    # use_pure=True
+    buffered=True
 )
 
-db = con.cursor(buffered=True)
+db = con.cursor()
 # with con: # PLAYERS added_by atribute is USER's key_auth primary key# db.execute("CREATE DATABASE IF NOT EXISTS Future5")
 db.execute("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)")
 db.execute("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)")
+# db.execute('set global max_allowed_packet=67108864')
 
 
 @app.route('/')
@@ -52,73 +56,62 @@ def index():
 def check_if_exists(rid):
     if (not rid.isdigit()):
         return False
-    try:
-        lock.acquire(True)
-        print(rid)
-        db.execute(f"SELECT * FROM PLAYERS WHERE rid=%s", (rid, ))
-        check = db.fetchall()
-        # print(check)
-        return False if len(check) == 0 else True
-    finally:
-        lock.release()
-
+    # print(rid)
+    db.execute("SELECT * FROM PLAYERS WHERE rid=%s LIMIT 0, 1", (rid, ))
+    check = db.fetchall()
+    # print(check)
+    return False if len(check) == 0 else True
 
 def check_user_key(key):
     if (not key):
         return False
-    try:
-        lock.acquire(True)
-        db.execute(f"SELECT * FROM USER WHERE key_auth='{key}'")
-        check = db.fetchall()
-        # print(check)
-        return False if len(check) == 0 else True
-    finally:
-        lock.release()
+    db.execute(f"SELECT * FROM USER WHERE key_auth='{key}' LIMIT 0, 1")
+    check = db.fetchall()
+    # print(check)
+    return False if len(check) == 0 else True
 
 # http://127.0.0.1:80/api/v1/user/<rid>
-
-
 @app.route('/api/v1/user/<rid>')
 @limiter.limit("100/minute")
 def get_user(rid):
-    try:
-        lock.acquire(True)
-        db.execute("SELECT * FROM PLAYERS WHERE rid=%s", (rid, ))
-        all = db.fetchall()
-        if(len(all) != 0):
-            # print(all)
-            for row in all:
-                if (row[7] == 1):
-                    return jsonify({
-                        'success': False,
-                        "message": "Player doesnt exist in the database"
-                    })
+    # try:
+        # lock.acquire(True)
+    db.execute("SELECT * FROM PLAYERS WHERE rid=%s", (rid, ))
+    all = db.fetchall()
+    if(len(all) != 0):
+        # print(all)
+        for row in all:
+            if (row[7] == 1):
                 return jsonify({
-                    "data": {
-                        'rokcstar_id': row[0],  # 0. rid
-                        'rockstar_name': row[1],  # 1. name
-                        # 'last_playerip': row[2], # 2. last_ip
-                        "player_note": row[3],  # 3. note
-                        # 4. is_modder
-                        "is_modder": True if row[4] == 1 else False,
-                        "advertiser": True if row[5] == 1 else False,
-                        "risk": row[6],  # 5. risk
-                        # "whitelist": True if row[7] == 1 else False, # 6. whitelist
-                        # "times_seen": row[8], # 7. times_seen
-                        "last_seen": row[9],  # 8. last_seen
-                        "first_seen": row[10],  # 9. first_seen
-                        # "added_by": row[11], # 10. added_by
-                    },
                     'success': False,
-                    "message": "Succesfully retrieved data from the database"
+                    "message": "Player doesnt exist in the database"
                 })
-        else:
             return jsonify({
+                "data": {
+                    'rokcstar_id': row[0],  # 0. rid
+                    'rockstar_name': row[1],  # 1. name
+                    # 'last_playerip': row[2], # 2. last_ip
+                    "player_note": row[3],  # 3. note
+                    # 4. is_modder
+                    "is_modder": True if row[4] == 1 else False,
+                    "advertiser": True if row[5] == 1 else False,
+                    "risk": row[6],  # 5. risk
+                    # "whitelist": True if row[7] == 1 else False, # 6. whitelist
+                    # "times_seen": row[8], # 7. times_seen
+                    "last_seen": row[9],  # 8. last_seen
+                    "first_seen": row[10],  # 9. first_seen
+                    # "added_by": row[11], # 10. added_by
+                },
                 'success': False,
-                "message": "Player doesnt exist in the database"
+                "message": "Succesfully retrieved data from the database"
             })
-    finally:
-        lock.release()
+    else:
+        return jsonify({
+            'success': False,
+            "message": "Player doesnt exist in the database"
+        })
+    # finally:
+    #     lock.release()
 
 # http://127.0.0.1:80/api/v1/user/exist/<rid>
 @app.route('/api/v1/user/exist/<rid>')
@@ -200,8 +193,6 @@ def add_user():
         })
 
 # http://127.0.0.1:80/api/v0/user/<rid>?key=<key>
-
-
 @app.route('/api/v0/user/<rid>')
 @limiter.limit("100/minute")
 def get_all_user(rid):
@@ -243,8 +234,10 @@ def get_all_user(rid):
         lock.release()
 
 
-# mysql = MySQL()
-# mysql.init_app(app)
-app.run(host="0.0.0.0", port=4000, debug=True)
-con.close()
-db.close()
+try:
+    # do something
+    app.run(host="0.0.0.0", port=4000, debug=True)
+except Exception:
+    con.close()
+    db.close()
+    sys.exit(1)
