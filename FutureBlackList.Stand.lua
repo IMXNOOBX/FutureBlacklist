@@ -3,8 +3,14 @@ util.require_natives(1660775568)
 util.keep_running()
 local json = require "lib/json"
 
-local developer_key = ''
-local host = "http://f5.imxnoobx.xyz/"
+local script = {
+	developer_key = '',
+	host = "http://f5.imxnoobx.xyz:4000",
+
+	friend_handle_ptr = memory.alloc(13*8),
+
+	detection_limiter = {}
+}
 
 local settings = {
 	check_modders = true,
@@ -24,8 +30,6 @@ local settings = {
 		"Remove By Any Means"
     },
 	adv_opt = 1,
-
-	friend_handle_ptr = memory.alloc(13*8)
 }
 
 local devs = {
@@ -45,7 +49,7 @@ local devs = {
 
 local functions = {
 	api_player_exists = function(rid)
-		async_http.init(host, "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
+		async_http.init(script.host, "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_player_exists response: '..status_code) end
 			if(status_code ~= 200) then return false end
 			local parsed = json.decode(body)
@@ -61,7 +65,7 @@ local functions = {
 		async_http.dispatch()
 	end,
 	api_get_player = function(rid)
-		async_http.init(host, "/api/v1/user/"..rid, function(body, header_fields, status_code) 
+		async_http.init(script.host, "/api/v1/user/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_get_player response: '..status_code) end
 			if(status_code ~= 200) then return false end
 			local parsed = json.decode(body)
@@ -81,16 +85,13 @@ local functions = {
 		async_http.dispatch()
 	end,
 	api_add_player = function(rid, name, ip, reason, modder)
-		async_http.init(host, "/api/v0/insert?key="..developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
+		async_http.init(script.host, "/api/v0/insert?key="..script.developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_add_player response: '..status_code) end
 			if(status_code == 403) then return "Error while adding player. Most likely invalid key!" end
 			if(status_code ~= 200) then return false end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
 				return false
-			end
-			if parsed['success'] == false then
-				return "Error while adding player. Most likely invalid key!"
 			end
 			if parsed["message"] ~= "" then 
 				return parsed["message"] 
@@ -100,15 +101,11 @@ local functions = {
 		end)
 		async_http.dispatch()
 	end,
-	-- local function pid_to_handle(pid) -- Credits: lancescript_reloaded
-	-- 	NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, handle_ptr, 13)
-	-- 	return handle_ptr
-	-- end
-	is_friend = function(pid)
-		NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, settings.friend_handle_ptr, 13)
-		return NETWORK.NETWORK_IS_FRIEND(settings.friend_handle_ptr)
+	is_friend = function(pid) -- Credits: lancescript_reloaded
+		NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, script.friend_handle_ptr, 13)
+		return NETWORK.NETWORK_IS_FRIEND(script.friend_handle_ptr)
 	end,
-	to_ipv4 = function(ip)
+	to_ipv4 = function(ip) -- Same
 		return string.format(
 			"%i.%i.%i.%i", 
 			ip >> 24 & 0xFF, 
@@ -168,7 +165,7 @@ end, settings.ignore_friends)
 	****************************************************************
 ]]
 menu.divider(admin_tab, 'Developer Settings')
-menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) developer_key = val util.toast('[Dev] Developer Key added '..val) end, developer_key)
+menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) script.developer_key = val util.toast('[Dev] Developer Key added '..val) end, script.developer_key)
 menu.toggle(admin_tab, 'Scan All', {''}, 'Scan All', function(val)
     devs.scan_all = val
 end, devs.scan_all)
@@ -200,14 +197,45 @@ menu.action(admin_tab, "Exist Player", {},"", function()
 	util.toast('[Dev] Response '..tostring(res))
 end)
 
+--[[
+	****************************************************************
+]]
 
+function checkSessionForModdersOrAdmins()
+	for _, pid in ipairs(players.list(false, not settings.ignore_friends, true)) do
+		if (players.is_marked_as_modder_or_admin(pid) and script.detection_limiter[pid]['modder'] == true) then
+			local rid = players.get_rockstar_id(pid)
+			local name = players.get_name(pid)
+			local ip = functions.to_ipv4(players.get_connect_ip(pid))
+			local result = functions.api_get_player(rid)
+			
+			if (players.is_marked_as_modder(pid)) then
+				local res = functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1)
+				if res ~= false then
+					util.toast('[Dev]  '..res)
+				end
+			elseif (players.is_marked_as_admin(pid)) then
+				local res = functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1)
+				if res ~= false then
+					util.toast('[Dev]  '..res)
+				end
+			end
 
+			script.detection_limiter[pid]['modder'] = true
+		end
+	end
+end
 
 --[[
 	****************************************************************
 ]]
 players.on_join(function(pid) 
 	if players.user() == pid then return end
+	script.detection_limiter[pid] = {
+        ['modder'] = false,
+        ['advertiser'] = false
+    }
+	checkSessionForModdersOrAdmins() -- Check all player by looping through all of them 
 	if settings.ignore_friends == true and functions.is_friend(pid) then return end
 	local rid = players.get_rockstar_id(pid)
 	local name = players.get_name(pid)
@@ -219,12 +247,18 @@ players.on_join(function(pid)
 		functions.player_join_reaction(pid, result)
 	end
 	-- util.yield(2000)
-	if  developer_key ~= '' then
+	if script.developer_key ~= '' then
 		util.toast('[Dev] Sending request to add '..name)
 		local res = functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
-		if res ~= nil then
+		if res ~= false then
 			util.toast('[Dev]  '..res)
 		end
 	end
 end)
 -- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.
+players.on_leave(function(pid) 
+    script.detection_limiter[pid] = { -- reset to avoid errors
+        ['modder'] = false,
+		['advertiser'] = false,
+    }
+end)
