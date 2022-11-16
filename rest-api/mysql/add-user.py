@@ -1,8 +1,13 @@
+import mysql.connector
 import random
-import sqlite3 as sl
 import string
 
-con = sl.connect('gta5.db', check_same_thread=False)
+con = mysql.connector.connect(
+  host="localhost",
+  user="Future5",
+  password="GNB82hBjtA54P8ey",
+  database="future5"
+)
 db = con.cursor()
 
 
@@ -13,14 +18,9 @@ if (input_key_auth != ""):
 name = input("User name: ")
 discord_id = input("User id: ")
 
-values = {  # https://stackoverflow.com/a/16698310/15384495
-	'key_auth': key_auth, 
-	'name': name, 
-	'discord_id': discord_id,
-}
-
-db.execute(f""" 
-	INSERT INTO USER (key_auth, name, discord_id) VALUES (:key_auth, :name, :discord_id);
-""", values)
+# https://stackoverflow.com/a/37406328/15384495
+db.execute(f"INSERT INTO USER (key_auth, name, discord_id) VALUES (%s, %s, %s)", (key_auth, name, discord_id))
 con.commit()
+con.close()
+db.close()
 print('added')

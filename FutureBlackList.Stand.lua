@@ -4,6 +4,7 @@ util.keep_running()
 local json = require "lib/json"
 
 local developer_key = ''
+local host = "http://f5.imxnoobx.xyz/"
 
 local settings = {
 	check_modders = true,
@@ -27,11 +28,30 @@ local settings = {
 	friend_handle_ptr = memory.alloc(13*8)
 }
 
+local devs = {
+	scan_all = true,
+	scan_modders = true,
+	scan_advertisers = true,
+
+	debug_http = false,
+
+	block_joinm = {
+		"Stand History",
+		"Desync (Coded)",
+		"Desync/Breakup"
+	},
+	block_joinm_opt = 1,
+}
+
 local functions = {
 	api_player_exists = function(rid)
-		async_http.init("http://panel.imxnoobx.xyz:4000", "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
+		async_http.init(host, "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
+			if (devs.debug_http == true) then util.toast('[Dev] api_player_exists response: '..status_code) end
 			if(status_code ~= 200) then return false end
 			local parsed = json.decode(body)
+			if parsed['success'] == false then
+				return false
+			end
 			if parsed['exist'] == true then 
 				return true 
 			end
@@ -41,9 +61,13 @@ local functions = {
 		async_http.dispatch()
 	end,
 	api_get_player = function(rid)
-		async_http.init("http://panel.imxnoobx.xyz:4000", "/api/v1/user/"..rid, function(body, header_fields, status_code) 
+		async_http.init(host, "/api/v1/user/"..rid, function(body, header_fields, status_code) 
+			if (devs.debug_http == true) then util.toast('[Dev] api_get_player response: '..status_code) end
 			if(status_code ~= 200) then return false end
 			local parsed = json.decode(body)
+			if parsed['success'] == false then
+				return -1 
+			end
 			if parsed['data']['is_modder'] == true then 
 				return 1 
 			end
@@ -57,14 +81,22 @@ local functions = {
 		async_http.dispatch()
 	end,
 	api_add_player = function(rid, name, ip, reason, modder)
-		async_http.init("http://panel.imxnoobx.xyz:4000", "/api/v0/insert?key="..developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
+		async_http.init(host, "/api/v0/insert?key="..developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
+			if (devs.debug_http == true) then util.toast('[Dev] api_add_player response: '..status_code) end
+			if(status_code == 403) then return "Error while adding player. Most likely invalid key!" end
 			if(status_code ~= 200) then return false end
-			local parsed = json.decode(content)
+			local parsed = json.decode(body)
+			if parsed['success'] == false then
+				return false
+			end
+			if parsed['success'] == false then
+				return "Error while adding player. Most likely invalid key!"
+			end
 			if parsed["message"] ~= "" then 
 				return parsed["message"] 
 			end
 		end, function()
-			return false 
+			return false
 		end)
 		async_http.dispatch()
 	end,
@@ -76,23 +108,31 @@ local functions = {
 		NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, settings.friend_handle_ptr, 13)
 		return NETWORK.NETWORK_IS_FRIEND(settings.friend_handle_ptr)
 	end,
+	to_ipv4 = function(ip)
+		return string.format(
+			"%i.%i.%i.%i", 
+			ip >> 24 & 0xFF, 
+			ip >> 16 & 0xFF, 
+			ip >> 8  & 0xFF, 
+			ip 		 & 0xFF
+		)
+	end,
 	player_join_reaction = function(pid, type)
 		local reaction = type == 1 and settings.m_opt or settings.adv_opt
 
 		if (reaction == 1) then
 			util.create_thread(function() 
-                menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on')
+                menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on')
 				util.yield(60000)
-				menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'off')
+				menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'off')
 				util.stop_thread()
 			end)
 		elseif (reaction == 2) then
-			menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on')
+			menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on')
 		elseif (reaction == 3) then
-			menu.trigger_command(menu.ref_by_rel_path(menu.player_root(i), 'Reactions>Block Join'), 'on') -- breakup/Desync
+			menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on') -- breakup/Desync
 		end
-			
-	
+		util.toast('[FutureBlacklist] Apliying reaction to '..players.get_name(pid)..' for '..type == 1 and "Modding" or "Advertiser")
 	end
 }
 local root = menu.my_root()
@@ -128,20 +168,6 @@ end, settings.ignore_friends)
 	****************************************************************
 ]]
 menu.divider(admin_tab, 'Developer Settings')
-local devs = {
-	scan_all = true,
-	scan_modders = true,
-	scan_advertisers = true,
-
-	debug_http = false,
-
-	block_joinm = {
-		"Stand History",
-		"Desync (Coded)",
-		"Desync/Breakup"
-	},
-	block_joinm_opt = 1,
-}
 menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) developer_key = val util.toast('[Dev] Developer Key added '..val) end, developer_key)
 menu.toggle(admin_tab, 'Scan All', {''}, 'Scan All', function(val)
     devs.scan_all = val
@@ -160,9 +186,19 @@ menu.list_select(admin_tab, "Block Join Mode", {}, "", devs.block_joinm, devs.bl
 	devs.block_joinm_opt = val
 	util.toast('[Dev] Reaction Mode '..devs.block_joinm[devs.block_joinm_opt])
 end)
-
-
-
+menu.divider(admin_tab, "Testing")
+menu.action(admin_tab, "Add Player", {},"", function() 
+	local res = functions.api_add_player("111111111", "name", "1.1.1.1", "Normal+player.",0)
+	util.toast('[Dev] Response '..tostring(res))
+end)
+menu.action(admin_tab, "Get Player", {},"", function() 
+	local res = functions.api_get_player("111111111")
+	util.toast('[Dev] Response '..tostring(res))
+end)
+menu.action(admin_tab, "Exist Player", {},"", function() 
+	local res = functions.api_player_exists("111111111")
+	util.toast('[Dev] Response '..tostring(res))
+end)
 
 
 
@@ -172,17 +208,23 @@ end)
 ]]
 players.on_join(function(pid) 
 	if players.user() == pid then return end
-	if settings.ignore_friends == true and funtions.is_friends(pid) then return end
+	if settings.ignore_friends == true and functions.is_friend(pid) then return end
 	local rid = players.get_rockstar_id(pid)
 	local name = players.get_name(pid)
-	local ip = players.get_connect_ip(pid)
+	local ip = functions.to_ipv4(players.get_connect_ip(pid))
 	local modder = players.is_marked_as_modder_or_admin(pid)
-
 	local result = functions.api_get_player(rid)
-	if(result == 1) or (result == 2) then
+	if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
+		util.toast('[Dev] Appliying reaction to '..nameha)
 		functions.player_join_reaction(pid, result)
-	elseif (result == -1) then
-		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
+	end
+	-- util.yield(2000)
+	if  developer_key ~= '' then
+		util.toast('[Dev] Sending request to add '..name)
+		local res = functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
+		if res ~= nil then
+			util.toast('[Dev]  '..res)
+		end
 	end
 end)
 -- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.

@@ -7,6 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sqlite3 as sl
 from http import HTTPStatus
+import time
 
 app = Flask(__name__)
 limiter = Limiter(
@@ -61,6 +62,7 @@ def index():
 def check_if_exists(rid):
     if (not rid.isdigit()):
         return False
+    time.sleep(0.1)
     try:
         lock.acquire(True)
         data = db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
@@ -73,9 +75,10 @@ def check_if_exists(rid):
 def check_user_key(key):
     if (not key):
         return False
+    time.sleep(0.1)
     try:
         lock.acquire(True)
-        data = db.execute(f"SELECT * FROM USER WHERE key_auth={key}")
+        data = db.execute(f"SELECT * FROM USER WHERE key_auth='{key}'")
         check = data.fetchall()
         # print(check)
         return False if len(check) == 0 else True
@@ -86,42 +89,40 @@ def check_user_key(key):
 @app.route('/api/v1/user/<rid>')
 @limiter.limit("100/minute")
 def get_user(rid):
-    try:
-        lock.acquire(True)
-        data = db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
-        all = data.fetchall()
-        if(len(all) != 0):
-            for row in all:
-                if (row[7] == 1) :
-                    return jsonify({
-                        'success': False,
-                        "message": "Player doesnt exist in the database"
-                    })
+    db = con.cursor()
+    data = db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
+    all = data.fetchall()
+    db.close()
+    if(len(all) != 0):
+        for row in all:
+            if (row[7] == 1) :
                 return jsonify({
-                    "data": {
-                        'rokcstar_id': row[0], # 0. rid
-                        'rockstar_name': row[1], # 1. name
-                        # 'last_playerip': row[2], # 2. last_ip
-                        "player_note": row[3], # 3. note
-                        "is_modder": True if row[4] == 1 else False, # 4. is_modder
-                        "advertiser": True if row[5] == 1 else False,
-                        "risk": row[6], # 5. risk
-                        # "whitelist": True if row[7] == 1 else False, # 6. whitelist
-                        # "times_seen": row[8], # 7. times_seen
-                        "last_seen": row[9], # 8. last_seen
-                        "first_seen": row[10], # 9. first_seen
-                        # "added_by": row[11], # 10. added_by
-                    },
                     'success': False,
-                    "message": "Succesfully retrieved data from the database"
+                    "message": "Player doesnt exist in the database"
                 })
-        else:
             return jsonify({
+                "data": {
+                    'rokcstar_id': row[0], # 0. rid
+                    'rockstar_name': row[1], # 1. name
+                    # 'last_playerip': row[2], # 2. last_ip
+                    "player_note": row[3], # 3. note
+                    "is_modder": True if row[4] == 1 else False, # 4. is_modder
+                    "advertiser": True if row[5] == 1 else False,
+                    "risk": row[6], # 5. risk
+                    # "whitelist": True if row[7] == 1 else False, # 6. whitelist
+                    # "times_seen": row[8], # 7. times_seen
+                    "last_seen": row[9], # 8. last_seen
+                    "first_seen": row[10], # 9. first_seen
+                    # "added_by": row[11], # 10. added_by
+                },
                 'success': False,
-                "message": "Player doesnt exist in the database"
+                "message": "Succesfully retrieved data from the database"
             })
-    finally:
-        lock.release()
+    else:
+        return jsonify({
+            'success': False,
+            "message": "Player doesnt exist in the database"
+        })
 
 # http://127.0.0.1:80/api/v1/user/exist/<rid>
 @app.route('/api/v1/user/exist/<rid>')
@@ -153,6 +154,7 @@ def add_user():
         return jsonify({
             'success': False,
         }), HTTPStatus.BAD_REQUEST
+    db = con.cursor()
     db.execute(f"UPDATE USER SET ip=? WHERE key_auth=?", (request_ip, key)) 
     if (not check_if_exists(rid)):
         values = {  # https://stackoverflow.com/a/16698310/15384495
@@ -169,21 +171,21 @@ def add_user():
         db.execute(f""" 
             INSERT INTO PLAYERS (rid, name, ip, note, modder, risk, last_seen, first_seen, added_by) VALUES (:rid, :name, :ip, :note, :modder, :risk, :last_seen, :first_seen, :added_by);
         """, values)
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Added {name} successfully'
         })
     elif(modder == 1):
         db.execute(f"UPDATE PLAYERS SET ip=?, times_seen = times_seen+1, last_seen=?, note=note + ?, modder=? WHERE rid=?", (ip, date, str(', ', note), modder, rid)) # note=note || ?
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Player {name} already exists, Updating to modder status!'
         })
     else:
         db.execute(f"UPDATE PLAYERS SET ip=?, times_seen = times_seen+1, last_seen=? WHERE rid=?", (ip, date, rid))
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Player {name} already exists, Updating player status!'
@@ -198,37 +200,36 @@ def get_all_user(rid):
         return jsonify({
             'success': False,
         }), HTTPStatus.FORBIDDEN
-    try:
-        lock.acquire(True)
-        data = db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
-        all = data.fetchall()
-        if(len(all) != 0):
-            for row in all:
-                return jsonify({
-                    "data": {
-                        'rokcstar_id': row[0], # 0. rid
-                        'rockstar_name': row[1], # 1. name
-                        'last_playerip': row[2], # 2. last_ip
-                        "player_note": row[3], # 3. note
-                        "is_modder": True if row[4] == 1 else False, # 4. is_modder
-                        "advertiser": True if row[5] == 1 else False,
-                        "risk": row[6], # 5. risk
-                        "whitelist": True if row[7] == 1 else False, # 6. whitelist
-                        "times_seen": row[8], # 7. times_seen
-                        "last_seen": row[9], # 8. last_seen
-                        "first_seen": row[10], # 9. first_seen
-                        "added_by": row[11], # 10. added_by
-                    },
-                    'success': False,
-                    "message": "Succesfully retrieved data from the database"
-                })
-        else:
+    db = con.cursor()
+    data = db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
+    all = data.fetchall()
+    db.close()
+    if(len(all) != 0):
+        for row in all:
             return jsonify({
+                "data": {
+                    'rokcstar_id': row[0], # 0. rid
+                    'rockstar_name': row[1], # 1. name
+                    'last_playerip': row[2], # 2. last_ip
+                    "player_note": row[3], # 3. note
+                    "is_modder": True if row[4] == 1 else False, # 4. is_modder
+                    "advertiser": True if row[5] == 1 else False,
+                    "risk": row[6], # 5. risk
+                    "whitelist": True if row[7] == 1 else False, # 6. whitelist
+                    "times_seen": row[8], # 7. times_seen
+                    "last_seen": row[9], # 8. last_seen
+                    "first_seen": row[10], # 9. first_seen
+                    "added_by": row[11], # 10. added_by
+                },
                 'success': False,
-                "message": "Player doesnt exist in the database"
+                "message": "Succesfully retrieved data from the database"
             })
-    finally:
-        lock.release()
+    else:
+        return jsonify({
+            'success': False,
+            "message": "Player doesnt exist in the database"
+        })
 
 
-app.run(host="0.0.0.0", port=80)
+
+app.run(host="0.0.0.0", port=4000, debug=True)
