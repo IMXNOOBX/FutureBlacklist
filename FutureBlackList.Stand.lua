@@ -5,7 +5,7 @@ local json = require "lib/json"
 
 local script = {
 	developer_key = '',
-	host = "http://f5.imxnoobx.xyz:4000",
+	host = "https://f5.imxnoobx.xyz",
 
 	friend_handle_ptr = memory.alloc(13*8),
 
@@ -51,7 +51,7 @@ local functions = {
 	api_player_exists = function(rid)
 		async_http.init(script.host, "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_player_exists response: '..status_code) end
-			if(status_code ~= 200) then return false end
+			if(tonumber(status_code) ~= 200) then return false end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
 				return false
@@ -67,7 +67,7 @@ local functions = {
 	api_get_player = function(rid)
 		async_http.init(script.host, "/api/v1/user/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_get_player response: '..status_code) end
-			if(status_code ~= 200) then return false end
+			if(tonumber(status_code) ~= 200) then return false end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
 				return -1 
@@ -86,9 +86,10 @@ local functions = {
 	end,
 	api_add_player = function(rid, name, ip, reason, modder)
 		async_http.init(script.host, "/api/v0/insert?key="..script.developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
+			-- print(tostring(status_code))
 			if (devs.debug_http == true) then util.toast('[Dev] api_add_player response: '..status_code) end
-			if(status_code == 403) then return "Error while adding player. Most likely invalid key!" end
-			if(status_code ~= 200) then return false end
+			if(tonumber(status_code) == 403) then return "Error while adding player. Most likely invalid key!" end
+			if(tonumber(status_code) ~= 200) then return false end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
 				return false
@@ -101,9 +102,9 @@ local functions = {
 		end)
 		async_http.dispatch()
 	end,
-	is_friend = function(pid) -- Credits: lancescript_reloaded
+	pid_to_handle = function(pid)-- Credits: lancescript_reloaded
 		NETWORK.NETWORK_HANDLE_FROM_PLAYER(pid, script.friend_handle_ptr, 13)
-		return NETWORK.NETWORK_IS_FRIEND(script.friend_handle_ptr)
+		return script.friend_handle_ptr
 	end,
 	to_ipv4 = function(ip) -- Same
 		return string.format(
@@ -211,16 +212,16 @@ function checkSessionForModdersOrAdmins()
 			
 			if (players.is_marked_as_modder(pid)) then
 				local res = functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1)
-				if res ~= false then
+				if res ~= nil then
 					util.toast('[Dev]  '..res)
 				end
 			elseif (players.is_marked_as_admin(pid)) then
 				local res = functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1)
-				if res ~= false then
+				if res ~= nil then
 					util.toast('[Dev]  '..res)
 				end
 			end
-
+			util.toast('[Dev] Sending request to add modder '..name)
 			script.detection_limiter[pid]['modder'] = true
 		end
 	end
@@ -236,23 +237,20 @@ players.on_join(function(pid)
         ['advertiser'] = false
     }
 	checkSessionForModdersOrAdmins() -- Check all player by looping through all of them 
-	if settings.ignore_friends == true and functions.is_friend(pid) then return end
+	if settings.ignore_friends == true and NETWORK.NETWORK_IS_FRIEND(functions.pid_to_handle(pid)) then return end
 	local rid = players.get_rockstar_id(pid)
 	local name = players.get_name(pid)
 	local ip = functions.to_ipv4(players.get_connect_ip(pid))
 	local modder = players.is_marked_as_modder_or_admin(pid)
 	local result = functions.api_get_player(rid)
 	if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
-		util.toast('[Dev] Appliying reaction to '..nameha)
+		util.toast('[Dev] Appliying reaction to '..name)
 		functions.player_join_reaction(pid, result)
 	end
 	-- util.yield(2000)
 	if script.developer_key ~= '' then
 		util.toast('[Dev] Sending request to add '..name)
-		local res = functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
-		if res ~= false then
-			util.toast('[Dev]  '..res)
-		end
+		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
 	end
 end)
 -- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.
