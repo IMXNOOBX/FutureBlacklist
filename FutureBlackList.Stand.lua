@@ -48,57 +48,57 @@ local devs = {
 }
 
 local functions = {
-	api_player_exists = function(rid)
+	api_player_exists = function(rid, callback)
 		async_http.init(script.host, "/api/v1/user/exist/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_player_exists response: '..status_code) end
-			if(tonumber(status_code) ~= 200) then return false end
+			if(tonumber(status_code) ~= 200) then return callback(false) end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
-				return false
+				return callback(false)
 			end
 			if parsed['exist'] == true then 
-				return true 
+				return callback(true) 
 			end
 		end, function()
-			return false 
+			return callback(false) 
 		end)
 		async_http.dispatch()
 	end,
-	api_get_player = function(rid)
+	api_get_player = function(rid, callback)
 		async_http.init(script.host, "/api/v1/user/"..rid, function(body, header_fields, status_code) 
 			if (devs.debug_http == true) then util.toast('[Dev] api_get_player response: '..status_code) end
-			if(tonumber(status_code) ~= 200) then return false end
+			if(tonumber(status_code) ~= 200) then return callback(-1) end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
-				return -1 
+				return callback(-1)
 			end
 			if parsed['data']['is_modder'] == true then 
-				return 1 
+				return callback(1, parsed['data']['player_note'])
 			end
 			if parsed['data']['advertiser'] == true then 
-				return 2
+				return callback(2, parsed['data']['player_note'])
 			end
-			return -1
+			return callback(-1)
 		end, function()
-			return -1 
+			return callback(-1)
 		end)
 		async_http.dispatch()
 	end,
-	api_add_player = function(rid, name, ip, reason, modder)
+	api_add_player = function(rid, name, ip, reason, modder, callback)
 		async_http.init(script.host, "/api/v0/insert?key="..script.developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
 			-- print(tostring(status_code))
 			if (devs.debug_http == true) then util.toast('[Dev] api_add_player response: '..status_code) end
-			if(tonumber(status_code) == 403) then return "Error while adding player. Most likely invalid key!" end
-			if(tonumber(status_code) ~= 200) then return false end
+			if(tonumber(status_code) == 403) then return callback("Error while adding player. Most likely invalid key!") end
+			if(tonumber(status_code) ~= 200) then return callback(false) end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
-				return false
+				return callback(false)
 			end
 			if parsed["message"] ~= "" then 
-				return parsed["message"] 
+				return callback(parsed["message"])
 			end
 		end, function()
-			return false
+			return callback(false)
 		end)
 		async_http.dispatch()
 	end,
@@ -186,16 +186,19 @@ menu.list_select(admin_tab, "Block Join Mode", {}, "", devs.block_joinm, devs.bl
 end)
 menu.divider(admin_tab, "Testing")
 menu.action(admin_tab, "Add Player", {},"", function() 
-	local res = functions.api_add_player("111111111", "name", "1.1.1.1", "Normal+player.",0)
-	util.toast('[Dev] Response '..tostring(res))
+	local res = functions.api_add_player("111111111", "name", "1.1.1.1", "Normal+player.",0, function(res) 
+		util.toast('[Dev] Response '..tostring(res))
+	end)
 end)
 menu.action(admin_tab, "Get Player", {},"", function() 
-	local res = functions.api_get_player("111111111")
-	util.toast('[Dev] Response '..tostring(res))
+	local res = functions.api_get_player("111111111", function(res) 
+		util.toast('[Dev] Response '..tostring(res))
+	end)
 end)
 menu.action(admin_tab, "Exist Player", {},"", function() 
-	local res = functions.api_player_exists("111111111")
-	util.toast('[Dev] Response '..tostring(res))
+	local res = functions.api_player_exists("111111111", function(res) 
+		util.toast('[Dev] Response '..tostring(res))
+	end)
 end)
 
 --[[
@@ -208,21 +211,23 @@ function checkSessionForModdersOrAdmins()
 			local rid = players.get_rockstar_id(pid)
 			local name = players.get_name(pid)
 			local ip = functions.to_ipv4(players.get_connect_ip(pid))
-			local result = functions.api_get_player(rid)
-			
-			if (players.is_marked_as_modder(pid)) then
-				local res = functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1)
-				if res ~= nil then
-					util.toast('[Dev]  '..res)
+			functions.api_get_player(rid, function(result, note)		
+				if (players.is_marked_as_modder(pid)) then
+					functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1, function(res)
+						if res ~= nil then
+							util.toast('[Dev]  '..res)
+						end
+					end)
+				elseif (players.is_marked_as_admin(pid)) then
+					functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1, function(res) 
+						if res ~= nil then
+							util.toast('[Dev]  '..res)
+						end
+					end)
 				end
-			elseif (players.is_marked_as_admin(pid)) then
-				local res = functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1)
-				if res ~= nil then
-					util.toast('[Dev]  '..res)
-				end
-			end
-			util.toast('[Dev] Sending request to add modder '..name)
-			script.detection_limiter[pid]['modder'] = true
+				util.toast('[Dev] Sending request to add modder '..name)
+				script.detection_limiter[pid]['modder'] = true
+			end)	
 		end
 	end
 end
@@ -242,15 +247,20 @@ players.on_join(function(pid)
 	local name = players.get_name(pid)
 	local ip = functions.to_ipv4(players.get_connect_ip(pid))
 	local modder = players.is_marked_as_modder_or_admin(pid)
-	local result = functions.api_get_player(rid)
-	if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
-		util.toast('[Dev] Appliying reaction to '..name)
-		functions.player_join_reaction(pid, result)
-	end
+	functions.api_get_player(rid, function(result, note) 
+		if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
+			util.toast('[Dev] Appliying reaction to '..name..' because ' ..note)
+			functions.player_join_reaction(pid, result)
+		end
+	end)
 	-- util.yield(2000)
 	if script.developer_key ~= '' then
-		util.toast('[Dev] Sending request to add '..name)
-		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0)
+		-- util.toast('[Dev] Sending request to add '..name)
+		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0, function(res)
+			 if(res ~= false) then
+				util.toast('[Dev] API response: '..name)
+			 end
+		end)
 	end
 end)
 -- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.

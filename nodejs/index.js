@@ -5,6 +5,7 @@ const PoolManager = require('mysql-connection-pool-manager');
 const config = require('./config.json')
 const v0 = require("./routes/v0"),
 	v1 = require('./routes/v1')
+const utils = require('./utils')
 
 const app = express()
 
@@ -37,10 +38,10 @@ const options = {
 	errorLimit: 5,
 	preInitDelay: 50,
 	sessionTimeout: 60000,
-	// onConnectionAcquire: () => { console.log("Acquire"); },
-	// onConnectionConnect: () => { console.log("Connect"); },
-	// onConnectionEnqueue: () => { console.log("Enqueue"); },
-	// onConnectionRelease: () => { console.log("Release"); },
+	onConnectionAcquire: () => { console.log("[debug] - Database Connection Acquired") },
+	onConnectionConnect: () => { console.log("[debug] - Database Connection Successed"); },
+	onConnectionEnqueue: () => { console.log("[debug] - Database Connection Enqueued"); },
+	onConnectionRelease: () => { console.log("[debug] - Database Connection Released"); },
 	mySQLSettings: {
 		host: config.db.host,
 		user: config.db.user,
@@ -61,8 +62,12 @@ const options = {
 
 const db = PoolManager(options);
 
-db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)")
-db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)")
+app.set('db', db);
+app.set('config', config);
+app.set('utils', utils);
+
+// db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)")
+// db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)")
 
 app.get('/', (req, res) => {
     res.send({
@@ -74,6 +79,7 @@ app.get('/', (req, res) => {
     })
 })
 
+
 app.get('/api/v1/user/:rid', v1.get_user)
 app.get('/api/v1/user/exist/:rid', v1.exist)
 
@@ -82,5 +88,5 @@ app.get('/api/v0/user/:rid', v0.get_user)
 
 
 app.listen(config.port, () => {
-	log.console('[debug] - listening on port 80')
+	console.log(`[debug] - API serving at http://127.0.0.1:${config.port}`)
 })
