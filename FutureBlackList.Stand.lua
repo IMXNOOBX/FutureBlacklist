@@ -38,11 +38,12 @@ local devs = {
 	scan_advertisers = true,
 
 	debug_http = false,
+	developer_logs = false,
 
 	block_joinm = {
 		"Stand History",
 		"Desync (Coded)",
-		"Desync/Breakup"
+		"Desync/Breakup Kick"
 	},
 	block_joinm_opt = 1,
 }
@@ -70,14 +71,16 @@ local functions = {
 			if(tonumber(status_code) ~= 200) then return callback(-1) end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
-				return callback(-1)
+				return callback(-2)
 			end
 			if parsed['data']['is_modder'] == true then 
-				print()
 				return callback(1, parsed['data']['player_note'])
 			end
 			if parsed['data']['advertiser'] == true then 
 				return callback(2, parsed['data']['player_note'])
+			end
+			if parsed['success'] == true then
+				return callback(0, parsed['data']['player_note'])
 			end
 			return callback(-1)
 		end, function()
@@ -89,7 +92,7 @@ local functions = {
 		async_http.init(script.host, "/api/v0/insert?key="..script.developer_key.."&rid="..rid.."&name="..name.."&ip="..ip.."&note="..reason.."&modder="..modder, function(body, header_fields, status_code) 
 			-- print(tostring(status_code))
 			-- if (devs.debug_http == true) then this.notify('[Dev] api_add_player response: '..status_code) end
-			if(tonumber(status_code) == 403) then return callback("Error while adding player. Most likely invalid key!") end
+			if(tonumber(status_code) == 429) then return callback("Error while adding player. Rate limit exceeded!") end
 			if(tonumber(status_code) ~= 200) then return callback(false) end
 			local parsed = json.decode(body)
 			if parsed['success'] == false then
@@ -123,20 +126,26 @@ local functions = {
 	end,
 	player_join_reaction = function(pid, type, callback)
 		local reaction = type == 1 and settings.m_opt or settings.adv_opt
-
+		local name = players.get_name(pid)
 		if (reaction == 1) then
 			util.create_thread(function() 
-                menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on')
+				print('Enabled history block, waiting 60 sec to disable')
+                menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'on')
 				util.yield(60000)
-				menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'off')
+				menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'off')
+				print('Disabled history block')
 				util.stop_thread()
 			end)
 		elseif (reaction == 2) then
-			menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on')
+			menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'on')
 		elseif (reaction == 3) then
-			menu.trigger_command(('Online>Player History>'..players.get_name(pid)..'>Player Join Reactions>Block Join'), 'on') -- breakup/Desync
+			if players.exists(pid) and menu.get_edition() >= 2 then
+				menu.trigger_commands("breakup" .. name)
+			else
+				-- functions.npm_remove(pid)
+			end
 		end
-		callback('Apliying reaction to '..players.get_name(pid)..' for '..type == 1 and "Modding" or "Advertiser")
+		callback('Apliying reaction to '..name..' for '..(type == 1 and "Modding" or "Advertiser"))
 	end
 }
 local root = menu.my_root()
@@ -172,7 +181,7 @@ end, settings.ignore_friends)
 	****************************************************************
 ]]
 menu.divider(admin_tab, 'Developer Settings')
-menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) script.developer_key = val functions.notify('[Dev] Developer Key added '..val) end, script.developer_key)
+apikey = menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) script.developer_key = val functions.notify('[Dev] Developer Key added!') menu.delete(apikey) end, script.developer_key)
 menu.toggle(admin_tab, 'Scan All', {''}, 'Scan All', function(val)
     devs.scan_all = val
 end, devs.scan_all)
@@ -186,57 +195,84 @@ menu.divider(admin_tab, '')
 menu.toggle(admin_tab, 'Debug HTTP/S', {''}, '', function(val)
     devs.debug_http = val
 end, devs.debug_http)
+menu.toggle(admin_tab, 'Developer Logs ', {''}, '', function(val)
+    devs.developer_logs = val
+end, devs.developer_logs)
 menu.list_select(admin_tab, "Block Join Mode", {}, "", devs.block_joinm, devs.block_joinm_opt, function(val) 
 	devs.block_joinm_opt = val
 	functions.notify('[Dev] Reaction Mode '..devs.block_joinm[devs.block_joinm_opt])
 end)
 menu.divider(admin_tab, "Testing")
 menu.action(admin_tab, "Add Player", {},"", function() 
-	local res = functions.api_add_player("111111111", "name", "1.1.1.1", "Normal+player.",0, function(res) 
-		functions.notify('[Dev] Test Response '..tostring(res))
+	functions.api_add_player("111111111", "name", "1.1.1.1", "Normal+player.", 0, function(res) 
+		if (devs.developer_logs) then functions.notify('[Dev] Test Response '..tostring(res)) end
 	end)
 end)
 menu.action(admin_tab, "Get Player", {},"", function() 
-	local res = functions.api_get_player("111111111", function(res) 
-		functions.notify('[Dev] Test Response '..tostring(res))
+	functions.api_get_player("111111111", function(res, note) 
+		if (devs.developer_logs) then functions.notify('[Dev] Test Response '..tostring(res)..' note '..tostring(note)) end
 	end)
 end)
 menu.action(admin_tab, "Exist Player", {},"", function() 
-	local res = functions.api_player_exists("111111111", function(res) 
-		functions.notify('[Dev] Test Response '..tostring(res))
+	functions.api_player_exists("111111111", function(res) 
+		if (devs.developer_logs) then functions.notify('[Dev] Test Response '..tostring(res)) end
 	end)
+end)
+menu.action(admin_tab, "Trigger Modder scanner", {},"", function() 
+	checkSessionForModdersOrAdmins()
 end)
 
 --[[
 	****************************************************************
 ]]
 
+function player_list(pid)
+    local tab_player = menu.player_root(pid)
+    menu.divider(tab_player, 'Dev | FutureBlacklist')
+	local rid = players.get_rockstar_id(pid)
+	local name = players.get_name(pid)
+	local ip = functions.to_ipv4(players.get_connect_ip(pid))
+	menu.action(tab_player, "Set Player as Modder", {},"", function() 
+		functions.api_add_player(rid, name, ip, "Manually+marked+as+modder.", 1, function(res) 
+			functions.notify('[Dev] Response '..tostring(res))
+		end)
+	end)
+	menu.action(tab_player, "Get Player info", {},"", function() 
+		functions.api_get_player(rid, function(res, note) 
+			if (res ~= -2) then
+				return functions.notify('[Dev] Response: '..(res == 1 and "Marked as Modder" or res == 2 and "Marked as Advertiser" or "Not marked").. ' | '.. (note ~= nil and note or "No description"))
+			end
+			functions.notify('[Dev] Response: Player does not exist in the database')
+		end)
+	end)
+	-- menu.action(tab_player, "Test Block Join", {},"", function() 
+	-- 	menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'on')
+	-- end)
+end
+
 function checkSessionForModdersOrAdmins()
 	for _, pid in ipairs(players.list(false, (not settings.ignore_friends), true)) do
-		if (players.is_marked_as_modder_or_admin(pid) == true or players.is_marked_as_modder(pid) == true) and (not script.detection_limiter[pid] or not script.detection_limiter[pid]['modder'] == true) then
+		if (players.is_marked_as_modder_or_admin(pid) == true or players.is_marked_as_modder(pid) == true) and (script.detection_limiter[pid] and not script.detection_limiter[pid]['modder'] == true) then
 			local rid = players.get_rockstar_id(pid)
 			local name = players.get_name(pid)
 			local ip = functions.to_ipv4(players.get_connect_ip(pid))
-			functions.api_get_player(rid, function(result, note)		
-				if (players.is_marked_as_modder(pid) == true) then
-					functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1, function(res)
-						if res ~= nil then
-							functions.notify('[Dev] Modder: '..res)
-						end
-					end)
-				elseif (players.is_marked_as_admin(pid) == true) then
-					functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1, function(res) 
-						if res ~= nil then
-							functions.notify('[Dev] Admin: '..res)
-						end
-					end)
-				end
-				functions.notify('[Dev] Sending request to add modder '..name)
-				
-				script.detection_limiter[pid] = {
-					['modder'] = true,
-				}
-			end)	
+			functions.notify('[Dev] Modder or Admin detected: '..tostring(name)) 
+			
+			if (players.is_marked_as_modder(pid) == true) then
+				-- functions.notify('[Dev] Sending modder add request: '..tostring(name)) 
+				functions.api_add_player(rid, name, ip, "Stand+modder+detection.", 1, function(res)
+					if (devs.developer_logs) then functions.notify('[Dev] Modder: '..tostring(res)) end
+				end)
+			elseif (players.is_marked_as_admin(pid) == true) then
+				-- functions.notify('[Dev] Sending admin add request: '..tostring(name)) 
+				functions.api_add_player(rid, name, ip, "Stand+admin+detection.", 1, function(res) 
+					if (devs.developer_logs) then functions.notify('[Dev] Admin: '..tostring(res)) end
+				end)
+			end
+			if (devs.developer_logs) then functions.notify('[Dev] Sending request to add modder '..name) end
+			script.detection_limiter[pid] = {
+				['modder'] = true,
+			}
 		end
 	end
 end
@@ -245,6 +281,7 @@ end
 	****************************************************************
 ]]
 players.on_join(function(pid) 
+	player_list(pid)
 	if players.user() == pid then return end
 	script.detection_limiter[pid] = {
         ['modder'] = false,
@@ -257,11 +294,11 @@ players.on_join(function(pid)
 	local ip = functions.to_ipv4(players.get_connect_ip(pid))
 	local modder = players.is_marked_as_modder_or_admin(pid)
 	functions.api_get_player(rid, function(result, note) 
-		functions.notify('[Dev] Checking modder'..tostring(result)..' because ' ..tostring(note))
+		-- if (devs.developer_logs) then functions.notify('[Dev] Checking modder'..tostring(result)..' because ' ..tostring(note)) end
 		if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
-			functions.notify('[Dev] Appliying reaction to '..name..' because ' ..note)
-			functions.player_join_reaction(pid, result, function(result) 
-				functions.notify(result)
+			if (devs.developer_logs) then functions.notify('[Dev] Appliying reaction to '..name..' because ' ..note) end
+			functions.player_join_reaction(pid, result, function(message) 
+				functions.notify(message)
 			end)
 		end
 	end)
@@ -269,12 +306,13 @@ players.on_join(function(pid)
 		-- functions.notify('[Dev] Sending request to add '..name)
 		functions.api_add_player(rid, name, ip, modder == true and "Stand+modder+detection." or "Normal+player.", modder == true and 1 or 0, function(res)
 			 if(res ~= false) then
-				functions.notify('[Dev] Adding player API response: '..res)
+				if (devs.developer_logs) then functions.notify('[Dev] Adding player API response: '..res) end
 			 end
 		end)
 	end
 end)
--- players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.
+players.dispatch_on_join() -- Calls your join handler(s) for every player that is already in the session.
+
 players.on_leave(function(pid) 
     script.detection_limiter[pid] = { -- reset to avoid errors
         ['modder'] = false,

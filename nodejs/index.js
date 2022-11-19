@@ -10,19 +10,28 @@ const user_exist = require('./utils/exist')
 
 const app = express()
 
-const limiter = rl({
-	windowMs: 15 * 60 * 1000, // 15 minutes
+const public_limiter = rl({
+	windowMs: 60 * 1000, // 1 minutes
 	max: 100, // Limit each IP to 100 requests per `window` (here, 15 minutes)
-	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     handler: function (req, res) {
         return res.status(429).json({
-          error: 'You sent too many requests. Please wait a while then try again'
+          error: 'You sent too many requests. Please wait a while and then try again.'
         })
     }
 })
 
-app.use(limiter)
+const uploader_limiter = rl({
+	windowMs: 60 * 1000, // 1 minutes
+	max: 150, // Limit each IP to 100 requests per `window` (here, 15 minutes)
+    handler: function (req, res) {
+        return res.status(429).json({
+          error: 'You sent too many requests. Please wait a while and then try again.'
+        })
+    }
+})
+
+app.use('/api/v1', public_limiter)
+app.use('/api/v0', uploader_limiter)
 app.use(express.json())
 
 // const connection = mysql.createConnection({
@@ -78,20 +87,36 @@ db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY
 
 app.get('/', (req, res) => {
     res.send({
-        success: true,
-        endpoints: {
+		endpoints: {
 			"v1_get_user": "/api/v1/user/<rid>",
 			"v1_user_exists": "/api/v1/users/exist/<rid>",
-        }
+        },
+		success: true
     })
 })
 
+if(config.debug)
+	app.use(function(req, res, next) {
+		console.log(`${req.headers['x-forwarded-for'] || req.socket.remoteAddress.split(`:`).pop()} | ${req.originalUrl}`)
+		next()
+	});
+
+
+// app.get('/ip', (request, response) => response.send(request.ip))
 
 app.get('/api/v1/user/:rid', v1.get_user)
 app.get('/api/v1/user/exist/:rid', v1.exist)
 
 app.get('/api/v0/insert', v0.insert)
 app.get('/api/v0/user/:rid', v0.get_user)
+
+app.use(function(req, res, next) {
+    res.status(404).send({
+        message: `Invalid endpoint.`,
+		success: false
+    });
+});
+
 
 
 app.listen(config.port, () => {
