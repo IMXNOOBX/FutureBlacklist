@@ -5,7 +5,8 @@ const PoolManager = require('mysql-connection-pool-manager'); // https://www.npm
 const config = require('./config.json')
 const v0 = require("./routes/v0"),
 	v1 = require('./routes/v1')
-const utils = require('./utils')
+const check_key = require('./utils/key')
+const user_exist = require('./utils/exist')
 
 const app = express()
 
@@ -38,17 +39,17 @@ const options = {
 	errorLimit: 5,
 	preInitDelay: 50,
 	sessionTimeout: 60000,
-	onConnectionAcquire: () => { console.log("[debug] - Database Connection Acquired") },
-	onConnectionConnect: () => { console.log("[debug] - Database Connection Successed"); },
-	onConnectionEnqueue: () => { console.log("[debug] - Database Connection Enqueued"); },
-	onConnectionRelease: () => { console.log("[debug] - Database Connection Released"); },
+	// onConnectionAcquire: () => { console.log("[debug] - Database Connection Acquired") },
+	// onConnectionConnect: () => { console.log("[debug] - Database Connection Successed"); },
+	// onConnectionEnqueue: () => { console.log("[debug] - Database Connection Enqueued"); },
+	// onConnectionRelease: () => { console.log("[debug] - Database Connection Released"); },
 	mySQLSettings: {
 		host: config.db.host,
 		user: config.db.user,
 		password: config.db.password,
 		database: config.db.database,
 		port: '3306',
-		socketPath: '/var/run/mysqld/mysqld.sock',
+		socketPath: '/tmp/mysql.sock', // /var/run/mysqld/mysqld.sock
 		charset: 'utf8',
 		multipleStatements: true,
 		connectTimeout: 15000,
@@ -64,11 +65,16 @@ const db = PoolManager(options);
 
 app.set('db', db);
 app.set('config', config);
-app.set('utils', utils);
-app.set('trust proxy', 1); //https://github.com/express-rate-limit/express-rate-limit/issues/165
+app.set('check_key', check_key);
+app.set('user_exist', user_exist);
+app.set('trust proxy', 2); //https://github.com/express-rate-limit/express-rate-limit/issues/165
 
-// db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)")
-// db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)")
+db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)", (res, msg) => {
+	// console.log(res,msg);
+});
+db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)", (res, msg) => {
+	// console.log(res, msg);
+});
 
 app.get('/', (req, res) => {
     res.send({
