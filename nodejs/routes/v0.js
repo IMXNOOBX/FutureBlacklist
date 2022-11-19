@@ -3,10 +3,11 @@ exports.get_user = function (req, res) {
     let rid = req.params.rid
     let key = req.query.key
 
-    db.query(`SELECT discord_id FROM USER WHERE key_auth='${key}' LIMIT 0, 1`, (res, msg) => {
-        if (res?.length == 0 ? false : true)
+    db.query(`SELECT discord_id FROM USER WHERE key_auth='${key}' LIMIT 0, 1`, (asw, msg) => {
+        if (asw?.length == 0)
             return res.send({
                 success: false,
+                message: "",
             })
     });
 
@@ -14,7 +15,7 @@ exports.get_user = function (req, res) {
 
         if (asw?.length == 0)
             return res.send({
-                message: "Player doesnt exist in the database",
+                message: "Player doesn't exist in the database.",
                 success: false,
             })
 
@@ -25,8 +26,8 @@ exports.get_user = function (req, res) {
                 rockstar_name: asw.name,
                 last_playerip: asw.last_ip,
                 player_note: asw.note,
-                is_modder: asw.modder,
-                advertiser: asw.advertiser,
+                is_modder: asw.modder == 1 ? true : false,
+                advertiser: asw.advertiser == 1 ? true : false,
                 risk: asw.risk,
                 whitelist: asw.whitelist,
                 times_seen: asw.times_seen,
@@ -34,7 +35,7 @@ exports.get_user = function (req, res) {
                 first_seen: asw.first_seen,
                 added_by: asw.added_by
             },
-            message: "Succesfully retrieved data from the database",
+            message: "Succesfully retrieved data from the database.",
             success: true,
         })
     });
@@ -42,6 +43,7 @@ exports.get_user = function (req, res) {
 
 exports.insert = async function (req, res) {
     var db = req.app.get('db');
+    var config = req.app.get('config');
     let key = req.query.key
     let rid = req.query.rid
     let name = req.query.name
@@ -49,8 +51,9 @@ exports.insert = async function (req, res) {
     let note = req.query.note
     let modder = (req.query.modder && (req.query.modder.toLowerCase() == "true" || req.query.modder.toLowerCase() == "1")) ? 1 : 0
     let advertiser = (req.query.advertiser && (req.query.advertiser.toLowerCase() == "true" || req.query.advertiser.toLowerCase() == "1")) ? 1 : 0
-    let risk = req.query.risk
+    let risk = (req.query.risk && req.query.risk > 0 && req.query.risk < 4) ? req.query.risk : 0
     let date = Date.now();
+    let fseen = req.query.firstseen || date
     db.query(`SELECT discord_id FROM USER WHERE key_auth='${key}' LIMIT 0, 1`, (asw, msg) => {
         if (asw?.length == 0)
             return res.send({
@@ -63,31 +66,64 @@ exports.insert = async function (req, res) {
                 success: false,
             })
             
-        db.query(`UPDATE USER SET ip=${req.headers['x-forwarded-for'] || req.socket.remoteAddress} WHERE key_auth='${key}'`, (asw, msg) => {})
+        db.query(`UPDATE USER SET ip='${req.ip}' WHERE key_auth='${key}'`, (asw, msg) => {
+            if(msg != null)
+                console.log(msg)
+        })
         db.query(`SELECT * FROM PLAYERS WHERE rid=${rid}`, (asw, msg) => {
             if (asw?.length == 0) {
-                db.query(`INSERT INTO PLAYERS (rid, name, ip, note, modder, advertiser, risk, last_seen, first_seen, added_by) VALUES (${rid}, ${name}, ${ip}, ${note}, ${modder}, ${advertiser}, ${risk}, ${date}, ${date}, ${uploader_id})`, (asw, msg) => {
+                db.query(`INSERT INTO PLAYERS (rid, name, ip, note, modder, advertiser, risk, last_seen, first_seen, added_by) VALUES (${rid}, '${name}', '${ip}', '${note}', ${modder}, ${advertiser}, ${risk}, '${date}', '${fseen || date}', ${uploader_id})`, (asw, msg) => {
+                    if(msg != null) {
+                        return res.send({
+                            message: `Error adding ${name}`,
+                            error: config.debug ? msg : null,
+                            success: false
+                        })
+                    }
+
                     return res.send({
                         message: `Added ${name} successfully`,
                         success: true
                     })
                 });
             } else if (modder == 1) {
-                db.query(`UPDATE PLAYERS SET ip=${ip}, times_seen = times_seen+1, last_seen=${date}, note=${note}, modder=${modder} WHERE rid=${rid}`, (asw, msg) => {
+                db.query(`UPDATE PLAYERS SET ip='${ip}', times_seen = times_seen+1, last_seen='${date}', note='${note}', modder='${modder}' WHERE rid=${rid}`, (asw, msg) => {
+                    if(msg != null)
+                        return res.send({
+                            message: `Error updating modder ${name}`,
+                            error: config.debug ? msg : null,
+                            success: false
+                        })
+                    
                     return res.send({
                         message: `Player ${name} already exists, Updating to modder status!`,
                         success: true
                     })
                 });
             } else if (advertiser == 1) {
-                db.query(`UPDATE PLAYERS SET ip=${ip}, times_seen = times_seen+1, last_seen=${date}, note=${note}, advertiser=${advertiser} WHERE rid=${rid}`, (asw, msg) => {
+                db.query(`UPDATE PLAYERS SET ip='${ip}', times_seen = times_seen+1, last_seen='${date}', note='${note}', advertiser=${advertiser} WHERE rid=${rid}`, (asw, msg) => {
+                    if(msg != null)
+                        return res.send({
+                            message: `Error updating advertiser ${name}`,
+                            error: config.debug ? msg : null,
+                            success: false
+                        })
+                
                     return res.send({
                         message: `Player ${name} already exists, Updating to advertiser status!`,
                         success: true
                     })
                 });
             } else {
-                db.query(`UPDATE PLAYERS SET ip=${ip}, times_seen = times_seen+1, last_seen=${date} WHERE rid=${rid}`, (asw, msg) => {
+                db.query(`UPDATE PLAYERS SET ip='${ip}', times_seen = times_seen+1, last_seen='${date}' WHERE rid=${rid}`, (asw, msg) => {
+                    if(msg != null) {
+                        return res.send({
+                            message: `Error updating player ${name}`,
+                            error: config.debug ? msg : null,
+                            success: false
+                        })     
+                    }               
+                    
                     return res.send({
                         message: `Player ${name} already exists, Updating player status!`,
                         success: true
