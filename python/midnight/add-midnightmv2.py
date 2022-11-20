@@ -24,18 +24,18 @@ with open(blacklist_path) as file:
 		ip = json_data['Modders'][modders]['last_ip']
 		reason = "Midnight+modder+detection."
 		print(f'https://f5.imxnoobx.xyz/api/v0/insert?key={key}&rid={rid}&name={name}&ip={ip}&note={reason}&modder=1')
-		# x = requests.get(f'https://f5.imxnoobx.xyz/api/v0/insert?key={key}&rid={rid}&name={name}&ip={ip}&note={reason}&modder=1')
-		# if (x.status_code != 200):
-		# 	print(f'({index})[FutureBlacklist] Error adding {name}, waiting 10 second for the next request')
-		# 	time.sleep(10)
-		# else:
-		# 	res = json.loads(x._content)['message']
-		# 	print(f'({index})[FutureBlacklist] Sent request to add modder {name}, with Rockstar id {rid}. Response: {res}.')
-		# 	# print(x._content)
-		# 	# time.sleep()
-		# if (index == limit):
-		# 	print('[FutureBlacklist] Waiting 60 seconds to avoid rate limit')
-		# 	time.sleep(60)
-		# 	limit = limit + 100
+		x = requests.get(f'https://f5.imxnoobx.xyz/api/v0/insert?key={key}&rid={rid}&name={name}&ip={ip}&note={reason}&modder=1')
+		if (x.status_code != 200):
+			print(f'({index})[FutureBlacklist] Error adding {name}, waiting 10 second for the next request')
+			time.sleep(10)
+		else:
+			res = json.loads(x._content)['message']
+			print(f'({index})[FutureBlacklist] Sent request to add modder {name}, with Rockstar id {rid}. Response: {res}.')
+			# print(x._content)
+			# time.sleep()
+		if (index == limit):
+			print('[FutureBlacklist] Waiting 60 seconds to avoid rate limit')
+			time.sleep(60)
+			limit = limit + 100
 		index = index +1
 print('\n\n\n[FutureBlacklist] Finished adding all midnight modders')

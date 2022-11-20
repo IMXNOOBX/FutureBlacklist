@@ -3,11 +3,17 @@ exports.get_user = function (req, res) {
     let rid = req.params.rid
     let key = req.query.key
 
-    db.query(`SELECT discord_id FROM USER WHERE key_auth='${key}' LIMIT 0, 1`, (asw, msg) => {
+    if(key == '' || !key) 
+        return res.send({
+            message: "",
+            success: false,
+        })
+
+    db.query(`SELECT * FROM USER WHERE key_auth='${key}' LIMIT 0, 1`, (asw, msg) => {
         if (asw?.length == 0)
             return res.send({
-                success: false,
                 message: "",
+                success: false,
             })
     });
 
