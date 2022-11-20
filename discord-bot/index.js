@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const { Webhook } = require('dis-logs');
 
 // const fs = require('fs');
+var mysql = require('mysql');
 const auth = require('dotenv').config()
 const client = new Discord.Client({
     intents: [
@@ -16,8 +17,14 @@ const client = new Discord.Client({
     //]
 });
 
+// var con = mysql.createConnection({
+//     host: config.db.host,
+//     user: config.db.user,
+//     password: config.db.password,
+//     database: config.db.database,
+// });
 
-// client.db = require('quick.db'); // Doing this, we will enable quick.db globaly: client.db.get(`info`) 
+// client.con = con;
 client.ms = require('ms');
 client.config = require('./conf/config.json'); // Same with all of these
 client.log = new Webhook(client.config.utils.log_webhook);

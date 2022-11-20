@@ -2,22 +2,22 @@ const { readdirSync } = require('fs')
 let slashCmd = []
 module.exports = (client) => {
 
-    readdirSync('./cmds/slashCommands/').forEach(dir => {
-        const commands = readdirSync(`./cmds/slashCommands/${dir}/`).filter(file => file.endsWith('.js'));
 
-        for (let file of commands) {
-            let slah = require(`../cmds/slashCommands/${dir}/${file}`);
+    const commands = readdirSync(`./cmds/slashCommands/`).filter(file => file.endsWith('.js'));
 
-            if (slah.name) {
-                client.commands.slash.set(slah.name, slah);
-                slashCmd.push(slah);
-            } else {
-                client.log.error('[BOT] | Error Loading: ' + slah.name)
-                continue;
-            }
+    for (let file of commands) {
+        let slah = require(`../cmds/slashCommands/${file}`);
 
+        if (slah.name) {
+            client.commands.slash.set(slah.name, slah);
+            slashCmd.push(slah);
+        } else {
+            client.log.error('[BOT] | Error Loading: ' + slah.name)
+            continue;
         }
-    });
+
+    }
+
 
     client.log.console('[BOT] | Slash Commands Loaded Sucessfully!');
 
