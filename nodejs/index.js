@@ -78,7 +78,7 @@ app.set('check_key', check_key);
 app.set('user_exist', user_exist);
 app.set('trust proxy', 2); //https://github.com/express-rate-limit/express-rate-limit/issues/165
 
-db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)", (res, msg) => {
+db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen TEXT, first_seen TEXT, added_by TEXT NOT NULL)", (res, msg) => {
 	// console.log(res,msg);
 });
 db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)", (res, msg) => {
@@ -97,7 +97,7 @@ app.get('/', (req, res) => {
 
 if(config.debug)
 	app.use(function(req, res, next) {
-		console.log(`${req.headers['x-forwarded-for'] || req.socket.remoteAddress.split(`:`).pop()} | ${req.originalUrl}`)
+		console.log(`${req.ip} | ${req.originalUrl}`)
 		next()
 	});
 
