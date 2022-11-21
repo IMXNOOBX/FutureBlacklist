@@ -30,14 +30,36 @@ module.exports = {
 		const key_user = interaction.options.getUser('generate');
 		const key_check = interaction.options.getString('check');
 		const key_disable = interaction.options.getBoolean('diable');
-		await interaction.followUp({ content: '🌌 - Searching in the internet galaxy for your request...'}); // not ephemeral cause defered
+        await interaction.followUp({ content: client.config.loading }).then(msg => { setTimeout(() => msg.delete(), 3000)}).catch(); // not ephemeral cause defered
+        if (interaction.user.id !== client.config.dev.owner_id) {
+            return;
+        }
 
-		if(!key_user || !key_check || !key_disable) {
+		if(!key_user && !key_check && !key_disable) {
 			let embed = new client.discord.EmbedBuilder()
 				.setColor("#FF0000")
 				.setDescription(`No option selected, Try again`)
 			await interaction.followUp({ content: 'Error :c', embeds: [embed], ephemeral: true}); // ephemeral
 		}
+
+        if (key_user && key_user?.id) {
+            var key = client.crypto.randomBytes(20).toString('hex').toUpperCase();
+            console.log(key, key_user.username, key_user.id)
+            client.con.query(`INSERT INTO USER (key_auth, name, discord_id) VALUES (${key}, ${key_user.username}, ${key_user.id});`, async function (error, results, fields) {
+                if (error) throw error;
+                let embed = new client.discord.EmbedBuilder()
+                    .setColor("#54FF5C")
+                    .setTitle('Succesfully created new user!')
+                    .setDescription(`No option selected, Try again`)
+                    .addFields(
+                        { name: '**Username**', value: `**__${key_user.username}__**`, inline: true },
+                        { name: '**User ID**', value: `**__${key_user.id}__**`, inline: true },
+                        { name: '\u200B', value: '\u200B' },
+                        { name: '**Key**', value: `||**${key}**||`, inline: true }
+                    )
+                await interaction.followUp({ content: 'Success!', embeds: [embed], ephemeral: true}); 
+            });
+        }
 
     }
 }

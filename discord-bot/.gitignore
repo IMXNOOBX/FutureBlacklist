@@ -4,9 +4,9 @@
 /node_modules
 
 # Discord/Auths
-.env
+# .env
 data.json
-config.json
+# config.json
 
 # Builds
 /build

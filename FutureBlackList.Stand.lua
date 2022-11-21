@@ -1,11 +1,11 @@
--- FutureBlackList v1.0.0
+-- FutureBlackList v1.1.0
 util.require_natives(1660775568)
 util.keep_running()
 local json = require "lib/json"
 
 local script = {
 	developer_key = '',
-	host = "https://f5.imxnoobx.xyz",
+	host = "https://api.futuredb.shop",
 
 	friend_handle_ptr = memory.alloc(13*8),
 
@@ -129,11 +129,11 @@ local functions = {
 		local name = players.get_name(pid)
 		if (reaction == 1) then
 			util.create_thread(function() 
-				print('Enabled history block, waiting 60 sec to disable')
+				-- print('Enabled history block, waiting 60 sec to disable')
                 menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'on')
 				util.yield(60000)
 				menu.trigger_command(menu.ref_by_path('Online>Player History>'..name..'>Player Join Reactions>Block Join'), 'off')
-				print('Disabled history block')
+				-- print('Disabled history block')
 				util.stop_thread()
 			end)
 		elseif (reaction == 2) then
@@ -288,14 +288,15 @@ players.on_join(function(pid)
         ['advertiser'] = false
     }
 	checkSessionForModdersOrAdmins() -- Check all player by looping through all of them 
-	if settings.ignore_friends == true and NETWORK.NETWORK_IS_FRIEND(functions.pid_to_handle(pid)) then return end
+	local hdl = functions.pid_to_handle(pid)
+	if settings.ignore_friends == true and NETWORK.NETWORK_IS_FRIEND(hdl) then return end
 	local rid = players.get_rockstar_id(pid)
 	local name = players.get_name(pid)
 	local ip = functions.to_ipv4(players.get_connect_ip(pid))
 	local modder = players.is_marked_as_modder_or_admin(pid)
 	functions.api_get_player(rid, function(result, note) 
 		-- if (devs.developer_logs) then functions.notify('[Dev] Checking modder'..tostring(result)..' because ' ..tostring(note)) end
-		if(result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
+		if (result == 1 and settings.check_modders == true) or (result == 2 and settings.check_advertisers == true) then
 			if (devs.developer_logs) then functions.notify('[Dev] Appliying reaction to '..name..' because ' ..note) end
 			functions.player_join_reaction(pid, result, function(message) 
 				functions.notify(message)

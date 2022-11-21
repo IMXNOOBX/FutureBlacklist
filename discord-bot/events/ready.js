@@ -8,8 +8,9 @@ module.exports.run = async (client) => {
     `${client.users.cache.size} Users`,
     `github.com/IMXNOOBX`,
   ];
+  client.user.setActivity("Starting bot...", { type: client.discord.ActivityType.Competing }); // 
   setInterval(() => {
-    const status = statuses[Math.floor(Math.random() * statuses.length)]; //Easy way to make random dynamic statuses
-    client.user.setActivity(status, { type: "WATCHING" }); //LISTENING, WATCHING, PLAYING
+    const status = statuses[Math.floor(Math.random() * statuses.length)]; 
+    client.user.setActivity(status, { type: client.discord.ActivityType.Watching }); // 
   }, 60000);
 };
