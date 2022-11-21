@@ -1,42 +1,40 @@
-import sys
 import datetime
 import json
+import sys
 import threading
 from http import HTTPStatus
 
-
-# import sqlite3 as sl
-import mysql.connector
 from flask import Flask, jsonify, request
 # https://flask-limiter.readthedocs.io/en/stable/
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+#from flask_mysqldb import MySQL
+from flaskext.mysql import MySQL
 
 app = Flask(__name__)
 
 limiter = Limiter(
     app,
     key_func=get_remote_address,
-    default_limits=["5000 per hour", "100/minute"],
+    default_limits=["5000 per hour", "100/minute", "2/second"],
     storage_uri="memory://",
 )
 
 lock = threading.Lock()
 
-con = mysql.connector.connect(
-    host="127.0.0.1",
-    user="Future5",
-    password="GNB82hBjtA54P8ey",
-    database="future5",
-    # use_pure=True
-    buffered=True
-)
+app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
+app.config['MYSQL_DATABASE_USER'] = 'Future5'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'GNB82hBjtA54P8ey'
+app.config['MYSQL_DATABASE_DB'] = 'future5'
 
+mysql = MySQL()
+mysql.init_app(app)
+
+con = mysql.connect()
 db = con.cursor()
-# with con: # PLAYERS added_by atribute is USER's key_auth primary key# db.execute("CREATE DATABASE IF NOT EXISTS Future5")
+
 db.execute("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen DATE, first_seen DATE, added_by TEXT NOT NULL)")
 db.execute("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY KEY,name TEXT,discord_id TEXT NOT NULL,ip TEXT)")
-# db.execute('set global max_allowed_packet=67108864')
 
 
 @app.route('/')
@@ -54,18 +52,26 @@ def check_if_exists(rid):
     if (not rid.isdigit()):
         return False
     # print(rid)
+    #db = mysql.connection.cursor()
+    # con.ping()
+    db = con.cursor()
     db.execute("SELECT * FROM PLAYERS WHERE rid=%s LIMIT 0, 1", (rid, ))
     check = db.fetchall()
+    db.close()
     # print(check)
     return False if len(check) == 0 else True
 
 def check_user_key(key):
     if (not key):
         return False
-    db.execute(f"SELECT * FROM USER WHERE key_auth='{key}' LIMIT 0, 1")
+    #db = mysql.connection.cursor()
+    # con.ping()
+    db = con.cursor()
+    db.execute(f"SELECT discord_id FROM USER WHERE key_auth='{key}' LIMIT 0, 1")
     check = db.fetchall()
+    db.close()
     # print(check)
-    return False if len(check) == 0 else True
+    return False if len(check) == 0 else check[0]
 
 # http://127.0.0.1:80/api/v1/user/<rid>
 @app.route('/api/v1/user/<rid>')
@@ -73,8 +79,12 @@ def check_user_key(key):
 def get_user(rid):
     # try:
         # lock.acquire(True)
+    #db = mysql.connection.cursor()
+    con.ping()
+    db = con.cursor()
     db.execute("SELECT * FROM PLAYERS WHERE rid=%s", (rid, ))
     all = db.fetchall()
+    db.close()
     if(len(all) != 0):
         # print(all)
         for row in all:
@@ -114,6 +124,7 @@ def get_user(rid):
 @app.route('/api/v1/user/exist/<rid>')
 @limiter.limit("100/minute")
 def exist_user(rid):
+    con.ping()
     return jsonify({
         'success': True,
         'exist': check_if_exists(rid),
@@ -134,9 +145,11 @@ def add_user():
                    "1" or request.args.get('advertiser') == "true") else 0
     risk = request.args.get('risk') if (request.args.get('risk') and request.args.get(
         'risk').isdigit() and 0 <= request.args.get('risk') < 3) else 0  # range 0-2, None, Medium, High
-    request_ip = request.remote_addr
+    # request_ip = request.remote_addr
     date = datetime.datetime.now()
-    if (not check_user_key(key)):  # Check uploader key
+    con.ping()
+    uploaderid = check_user_key(key)
+    if (not uploaderid):  # Check uploader key
         return jsonify({
             'success': False,
         }), HTTPStatus.FORBIDDEN
@@ -144,7 +157,9 @@ def add_user():
         return jsonify({
             'success': False,
         }), HTTPStatus.BAD_REQUEST
-    db.execute("UPDATE USER SET ip=%s WHERE key_auth=%s", (request_ip, key))
+    #db = mysql.connection.cursor()
+    db = con.cursor()
+    # db.execute("UPDATE USER SET ip=%s WHERE key_auth=%s", (request_ip, key))
     if (not check_if_exists(rid)):
         values = (
             rid,
@@ -156,10 +171,10 @@ def add_user():
             risk,
             date,
             date,
-            key
+            uploaderid
         )
         db.execute("INSERT INTO PLAYERS (rid, name, ip, note, modder, advertiser,  risk, last_seen, first_seen, added_by) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", values)
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Added {name} successfully'
@@ -167,7 +182,7 @@ def add_user():
     elif (modder == 1):
         db.execute("UPDATE PLAYERS SET ip=%s, times_seen = times_seen+1, last_seen=%s, note=%s, modder=%s WHERE rid=%s",
                    (ip, date, note, modder, rid))  # note=note || ?
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Player {name} already exists, Updating to modder status!'
@@ -175,15 +190,15 @@ def add_user():
     elif (advertiser == 1):
         db.execute("UPDATE PLAYERS SET ip=%s, times_seen = times_seen+1, last_seen=%s, note=%s, advertiser=%s WHERE rid=%s",
                    (ip, date, note, advertiser, rid))  # note=note || ?
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
-            'message': f'Player {name} already exists, Updating to modder status!'
+            'message': f'Player {name} already exists, Updating to advertiser status!'
         })
     else:
         db.execute(
             "UPDATE PLAYERS SET ip=%s, times_seen = times_seen+1, last_seen=%s WHERE rid=%s", (ip, date, rid))
-        con.commit()
+        con.commit(); db.close()
         return jsonify({
             'success': True,
             'message': f'Player {name} already exists, Updating player status!'
@@ -200,6 +215,7 @@ def get_all_user(rid):
         }), HTTPStatus.FORBIDDEN
     try:
         lock.acquire(True)
+        con.ping()
         db.execute(f"SELECT * FROM PLAYERS WHERE rid={rid}")
         all = db.fetchall()
         if (len(all) != 0):
@@ -231,10 +247,5 @@ def get_all_user(rid):
         lock.release()
 
 
-try:
-    # do something
-    app.run(host="0.0.0.0", port=4000, debug=True)
-except Exception:
-    con.close()
-    db.close()
-    sys.exit(1)
+# app.run(host="0.0.0.0", port=4000, ssl_context=('f5.cert.pem', 'f5.key.pem'), debug=True)
+app.run(host="0.0.0.0", port=4000, debug=False)

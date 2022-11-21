@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const { Webhook } = require('dis-logs');
+const config = require('./conf/config.json');
 
 // const fs = require('fs');
 var mysql = require('mysql');
@@ -10,17 +11,17 @@ const client = new Discord.Client({
     ],
 });
 
-// var con = mysql.createConnection({
-//     host: config.db.host,
-//     user: config.db.user,
-//     password: config.db.password,
-//     database: config.db.database,
-// });
+var con = mysql.createConnection({
+    host: config.db.host,
+    user: config.db.user,
+    password: config.db.password,
+    database: config.db.database,
+});
 
-// client.con = con;
+client.con = con;
 client.crypto = require("crypto");
 client.ms = require('ms');
-client.config = require('./conf/config.json'); // Same with all of these
+client.config = config; 
 client.log = new Webhook(client.config.utils.log_webhook);
 
 client.discord = Discord;
