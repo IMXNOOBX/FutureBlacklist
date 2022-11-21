@@ -1,0 +1,16 @@
+{
+    "loading": "<a:loading:920393338060931113>",
+    "dev": {
+        "owner_id": "652969127756955658"
+    },
+    "utils": {
+        "invite": "<invite_url>%20applications.commands",
+        "log_webhook": "https://discord.com/api/webhooks/1026831045364039700/_D79Yu4w0qP5pMcVVNvewEgktzn-fsUhdsxyUBv1wN2PYhzk2VhjQpJnrmzQLvY4N2vy"
+    },
+	"db": {
+		"host": "localhost",
+		"user": "Future5",
+		"password": "GNB82hBjtA54P8ey",
+		"database": "future5"
+	}
+}

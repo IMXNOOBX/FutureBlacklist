@@ -7,14 +7,7 @@ const auth = require('dotenv').config()
 const client = new Discord.Client({
     intents: [
         Discord.GatewayIntentBits.Guilds,
-        // Discord.GatewayIntentBits.GuildMembers,
-        // Discord.GatewayIntentBits.GuildMessages,
-        // Discord.GatewayIntentBits.GuildWebhooks,
-        // Discord.GatewayIntentBits.DirectMessages
     ],
-    //partials: [
-    //    Discord.Partials.Channel, // Required to receive DMs
-    //]
 });
 
 // var con = mysql.createConnection({
@@ -25,6 +18,7 @@ const client = new Discord.Client({
 // });
 
 // client.con = con;
+client.crypto = require("crypto");
 client.ms = require('ms');
 client.config = require('./conf/config.json'); // Same with all of these
 client.log = new Webhook(client.config.utils.log_webhook);

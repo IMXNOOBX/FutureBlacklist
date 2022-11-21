@@ -1,4 +1,4 @@
 module.exports.run = async (error, client) => {
-    // client.log.error(`[BOT] | Client's WebSocket Error: ${error}`);   
-    console.log(error)
+    client.log.error(`[BOT] | Client's WebSocket Error: ${error}`);   
+    // console.log(error)
 }    
