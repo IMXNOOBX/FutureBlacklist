@@ -1,4 +1,4 @@
--- FutureBlackList v1.2.2
+-- FutureBlackList v1.2.3
 util.require_natives(1660775568)
 util.keep_running()
 local json
@@ -27,7 +27,8 @@ local script = {
 
 	friend_handle_ptr = memory.alloc(13*8),
 
-	detection_limiter = {}
+	detection_limiter = {}, 
+	detection_timer = 0
 }
 
 local settings = {
@@ -58,12 +59,21 @@ local devs = {
 	debug_http = false,
 	developer_logs = false,
 
+	sms_mode = {
+		"Don't send",
+		"Send to modders/advertisers",
+		"Send to all",
+	},
+	sms_mode_opt = 1,
+
 	block_joinm = {
 		"Stand History",
 		"Desync (Coded)",
 		"Desync/Breakup Kick"
 	},
 	block_joinm_opt = 1,
+
+
 }
 
 local functions = {
@@ -112,9 +122,9 @@ local functions = {
 			if(tonumber(status_code) == 429) then return callback("Error while adding player. Rate limit exceeded!") end
 			if(tonumber(status_code) ~= 200) then return callback(false) end
 			local parsed = json.decode(body)
-			if parsed['success'] == false then
-				return callback(false)
-			end
+			-- if parsed['success'] == false then
+			-- 	return callback(false)
+			-- end
 			if parsed["message"] ~= "" then 
 				return callback(parsed["message"])
 			end
@@ -207,6 +217,10 @@ end, devs.scan_modders)
 menu.toggle(admin_tab, 'Scan For Advertisers', {''}, 'Scan Advertisers', function(val)
     devs.scan_advertisers = val
 end, devs.scan_advertisers)
+menu.list_select(admin_tab, "SMS notifier", {}, "Send an sms notification to the target.", devs.sms_mode, devs.sms_mode_opt, function(val) 
+	devs.sms_mode_opt = val
+	functions.notify('SMS notifier set to '..devs.sms_mode[devs.sms_mode_opt])
+end)
 menu.divider(admin_tab, '')
 menu.toggle(admin_tab, 'Debug HTTP/S', {''}, '', function(val)
     devs.debug_http = val
@@ -270,11 +284,12 @@ function checkSessionForModdersOrAdmins()
 			local rid = players.get_rockstar_id(pid)
 			local name = players.get_name(pid)
 			local ip = functions.to_ipv4(players.get_connect_ip(pid))
-			functions.notify('[Dev] Modder or Admin detected: '..tostring(name)) 
+			-- functions.notify('[Dev] Modder or Admin detected: '..tostring(name)) 
 			
 			if (players.is_marked_as_modder(pid) == true) then
 				functions.api_add_player(rid, name, ip, "Stand modder detection.", 1, function(res)
 					if (devs.developer_logs) then functions.notify('[Dev] Sendig request to add modder ('..name..'): '..tostring(res)) end
+					if(devs.sms_mode_opt ~= 1) then players.send_sms(pid, players.user(), "Your account has been added to Future Blacklist for modding.") end
 				end)
 			elseif (players.is_marked_as_admin(pid) == true) then
 				functions.api_add_player(rid, name, ip, "Stand admin detection.", 1, function(res) 
@@ -284,7 +299,7 @@ function checkSessionForModdersOrAdmins()
 			script.detection_limiter[pid] = {
 				['modder'] = true,
 			}
-			if (devs.developer_logs) then functions.notify('[Dev] Modder/Admin request sent successfully and set player modder true ('..name..')') end
+			-- if (devs.developer_logs) then functions.notify('[Dev] Modder/Admin request sent successfully and set player modder true ('..name..')') end
 		end
 	end
 end
@@ -292,6 +307,17 @@ end
 --[[
 	****************************************************************
 ]]
+
+util.create_thread(function()  -- Modder check every 10 seconds
+	while True do
+		if(script.detection_timer > util.current_time_millis()) then
+			checkSessionForModdersOrAdmins() 
+			script.detection_timer = util.current_time_millis() + 10000
+		end
+		util.yield()
+	end
+end)
+
 players.on_join(function(pid) 
 	player_list(pid)
 	if players.user() == pid then return end
@@ -301,6 +327,7 @@ players.on_join(function(pid)
     }
 
 	checkSessionForModdersOrAdmins() -- Check all player by looping through all of them 
+	script.detection_timer = util.current_time_millis() + 10000
 
 	local hdl = functions.pid_to_handle(pid)
 	if settings.ignore_friends == true and NETWORK.NETWORK_IS_FRIEND(hdl) then return end
@@ -321,6 +348,7 @@ players.on_join(function(pid)
 		functions.api_add_player(rid, name, ip, modder == true and "Stand modder detection." or "Normal player.", modder == true and 1 or 0, function(res)
 			 if(res ~= false) then
 				if (devs.developer_logs) then functions.notify('[Dev] Adding player API response: '..res) end
+				if(not string.find(res, "Updating") and devs.sms_mode_opt == 3) then players.send_sms(pid, players.user(), "Your account has been registered in FutureDB.") end
 			 end
 		end)
 	end
