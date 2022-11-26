@@ -1,0 +1,10 @@
+{
+	"port": 4000,
+	"debug": true,
+	"db": {
+		"host": "localhost",
+		"user": "Future5",
+		"password": "GNB82hBjtA54P8ey",
+		"database": "future5"
+	}
+}

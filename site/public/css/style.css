@@ -1,0 +1,223 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  scroll-behavior: smooth;
+  cursor: url("https://raw.githubusercontent.com/IMXNOOBX/imxnoobx.github.io/main/mouse/default.svg"), auto;
+  transition: all .5s;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.bg-image {
+  /* The image used */
+  background-image: url("../assets/nasa_space.png");
+
+  /* Add the blur effect */
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+
+  /* Full height */
+  height: 100%;
+
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  /* background-size: cover; */
+  overflow: hidden;
+
+  background-position: 0px 0px;
+  background-repeat: repeat-x;
+  animation: animatedBackground 60s linear infinite alternate;
+}
+
+@keyframes animatedBackground {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+.nav {
+  /* Position text in the middle of the page/image */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(56, 56, 56, 0.4); /* Black w/opacity/see-through */
+  border-radius: 15px;
+  box-shadow: inset;
+  color: white;
+  font-weight: bold;
+  /* border: 2px solid rgb(24, 24, 24); */
+  box-shadow: 0 0px 15px rgba(255, 255, 255, 0.322);
+  position: absolute;
+  top: 7%; /*10%*/
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 95%;
+  padding: 5px;
+  text-align: center;
+}
+
+.nav h1 {
+  /* text-align: left; */
+  float: left;
+  margin-left: 20px;
+}
+
+.nav a {
+  /* text-align: left; */
+  float: right; 
+  
+  /* margin: 10px;
+  padding: 20px; */
+
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 40px;
+  padding-right: 40px;
+
+  margin-right: 20px;
+  margin-top: 10px;
+  margin-top: 10px;
+
+  text-decoration: none;
+  background-color: rgb(24, 24, 24);
+  border-radius: 15px;
+  color: white;
+  transition: all .5s;
+
+  text-transform: uppercase;
+}
+
+.nav a:hover {
+  background-color: rgb(233, 233, 233);
+  color: rgb(24, 24, 24);
+  box-shadow: 0 0px 15px rgba(255, 255, 255, 0.322);
+  border-radius: 10px;
+  font-size: 17px;
+}
+
+.content {
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(56, 56, 56, 0.4); /* Black w/opacity/see-through */
+  border-radius: 15px;
+  box-shadow: inset;
+  color: white;
+  font-weight: bold;
+  /* border: 2px solid rgb(24, 24, 24); */
+  box-shadow: 0 0px 15px rgba(255, 255, 255, 0.322);
+  position: absolute;
+  top: 15%;
+  left: 36.5%;
+  transform: translate(-50%);
+  z-index: 2;
+  width: 68%;
+  padding: 5px;
+  text-align: center;
+}
+
+
+.content-search {
+  /* float: left;   */
+  width: 100%;
+  /* margin-left: 20px;
+  margin-right: 20px; */
+  padding: 20px, 0, 0, 20px;
+  /* padding-left: 20px; */
+  margin-top: 20px;
+
+  background-color: rgba(56, 56, 56, 0.5);
+  border-radius: 10px;
+}
+
+.content-search input[type=text] {
+  float: left;  
+  border: none;
+  color: white;
+  /* background-color: black; */
+  font-size: 20px;
+  background-color: rgba(56, 56, 56, 0.7);
+
+  /* margin-left: 20px; */
+
+  border-radius: 10px;
+  height: 40px;
+  width: calc(100% - 45px);
+}
+
+.content-search button {
+  float: left;
+  cursor:pointer;
+  border:none;
+  text-decoration: none;
+  background-color: transparent;
+  height: 40px;
+}
+
+.content-search button:active {
+  /* float: right; */
+
+}
+
+
+.content-result {
+  margin: 20px;
+  padding-top: 60px;
+}
+
+.stats {
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(56, 56, 56, 0.4); /* Black w/opacity/see-through */
+  border-radius: 15px;
+  box-shadow: inset;
+  color: white;
+  font-weight: bold;
+  /* border: 2px solid rgb(24, 24, 24); */
+  box-shadow: 0 0px 15px rgba(255, 255, 255, 0.322);
+  position: absolute;
+  top: 15%;
+  left: 85%;
+  transform: translate(-50%);
+  z-index: 2;
+  width: 25%;
+  padding: 5px;
+  text-align: center;
+}
+
+.stats ul {
+  float: left;
+  text-align: left;
+  list-style-type: none;
+}
+
+.stats li {
+  margin-top: 20px;
+}
+
+.footer  {
+  color: white;
+  font-weight: bold;
+  /* border: 2px solid rgb(24, 24, 24); */
+  position: absolute;
+  top: 95%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 100%;
+  padding: 5px;
+  text-align: center;
+}
+
+.footer span {
+  font-size: 12px
+}
+.footer a  {
+  font-size: 11px;
+  text-decoration: none;
+  color: rgb(123, 154, 255);
+}

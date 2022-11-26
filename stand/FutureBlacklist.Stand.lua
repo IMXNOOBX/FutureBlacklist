@@ -2,13 +2,16 @@
 util.require_natives(1660775568)
 util.keep_running()
 local json
-if(not filesystem.exists(filesystem.scripts_dir()..'lib/json.lua')) then
+local path_root = filesystem.scripts_dir() .."FBL/"
+
+if not filesystem.exists(path_root .. "FBL") then filesystem.mkdir(path_root) end
+if(not filesystem.exists(path_root..'json.lua')) then
 	async_http.init('raw.githubusercontent.com','/IMXNOOBX/ScriptKid/main/lib/json.lua',function(req)
 		local err = select(2,load(req))
 		if err then
 			util.toast("Failed to download lib/json.lua")
 		return end
-		local f = io.open(filesystem.scripts_dir()..'lib/json.lua', "wb")
+		local f = io.open(path_root..'json.lua', "wb")
 		f:write(req)
 		f:close()
 		util.toast("Successfully downloaded json.lua")
@@ -20,7 +23,6 @@ else
 end
 
 
-
 local script = {
 	developer_key = '',
 	host = "https://api.futuredb.shop",
@@ -30,6 +32,12 @@ local script = {
 	detection_limiter = {}, 
 	detection_timer = 0
 }
+
+if filesystem.exists(path_root.."key") then
+	local f = io.open(path_root.."key")
+	script.developer_key = f:read()
+	f:close()
+end
 
 local settings = {
 	check_modders = true,
@@ -207,7 +215,22 @@ end, settings.ignore_friends)
 ]]
 
 menu.divider(admin_tab, 'Developer Settings')
-apikey = menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) script.developer_key = val functions.notify('[Dev] Developer Key added!') menu.delete(apikey) end, script.developer_key)
+if (script.developer_key == "") then
+	apikey = menu.text_input(admin_tab, "Insert Api Key", {'Future5_api_key'}, "", function(val) 
+		script.developer_key = val 
+		functions.notify('[Dev] Developer Key added!') 
+		if filesystem.exists(path_root.."key") then
+			local f = io.open(path_root.."key")
+			script.developer_key = f:read()
+			f:close()
+		else
+			local f = io.open(path_root.."key", "wb")
+			f:write(val)
+			f:close()
+		end
+		menu.delete(apikey) 
+	end, script.developer_key)
+end
 menu.toggle(admin_tab, 'Scan All', {''}, 'Scan All', function(val)
     devs.scan_all = val
 end, devs.scan_all)
@@ -289,7 +312,7 @@ function checkSessionForModdersOrAdmins()
 			if (players.is_marked_as_modder(pid) == true) then
 				functions.api_add_player(rid, name, ip, "Stand modder detection.", 1, function(res)
 					if (devs.developer_logs) then functions.notify('[Dev] Sendig request to add modder ('..name..'): '..tostring(res)) end
-					if(devs.sms_mode_opt ~= 1) then players.send_sms(pid, players.user(), "Your account has been added to Future Blacklist for modding.") end
+					if(devs.sms_mode_opt ~= 1) then print('sms sent') players.send_sms(pid, players.user(), "Your account has been added to Future Blacklist for modding.") end
 				end)
 			elseif (players.is_marked_as_admin(pid) == true) then
 				functions.api_add_player(rid, name, ip, "Stand admin detection.", 1, function(res) 
@@ -348,7 +371,7 @@ players.on_join(function(pid)
 		functions.api_add_player(rid, name, ip, modder == true and "Stand modder detection." or "Normal player.", modder == true and 1 or 0, function(res)
 			 if(res ~= false) then
 				if (devs.developer_logs) then functions.notify('[Dev] Adding player API response: '..res) end
-				if(not string.find(res, "Updating") and devs.sms_mode_opt == 3) then players.send_sms(pid, players.user(), "Your account has been registered in FutureDB.") end
+				if(not string.match(res, "Updating") ~= nil and devs.sms_mode_opt == 3) then players.send_sms(pid, players.user(), "Your account has been registered in FutureDB.") end
 			 end
 		end)
 	end

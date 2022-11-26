@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/x-icon" href="../assets/icon.jpg">
+	<link rel="stylesheet" href="../css/style.css">
+	<title>FutureDB</title>
+</head>
+<body>
+	<div class="bg-image"></div>
+	<div class="container">
+		<div class="nav">
+			<h1>FBL | Future Blacklist</h1>
+			<div class="nav-btn"> 
+				<!-- float right, the order goes backwards -->
+				<a target="_blank" href="https://discord.gg/eJH2hVGSKz" style="color: #7289DA">Discord</a>
+				<a href="#faq">FAQ</a>
+				<a href="#api">API</a>
+				<a href="#home">Home</a>
+			</div>
+		</div>
+		<div class="content">
+			<h2>Find/Search Players</h2>
+			<hr>
+			<div class="content-search">
+				<input id="player-id" type="text" placeholder="Search player by rid/name">
+				<button type="submit" onClick="showPlayer()"><img src="../assets/icons8-search-32.png" alt="search"></img></button>
+			</div>
+			<div class="content-result">
+				<div id="search-result"></div>
+			</div>
+		</div>
+		<div class="stats">
+			<h2>Database Stats</h2>
+			<hr>
+			<ul>
+				<li>Total Players: <span id="total-players">Loading...</span></li>
+				<li>Legit Players: <span id="legit-players">Loading...</span></li>
+				<li>Modders: <span id="modder-players">Loading...</span></li>
+				<li>Advertisers: <span id="advertiser-players">Loading...</span></li>
+			</ul>
+		</div>
+		<!-- <img src="../assets/icon.jpg" alt="asd"> -->
+		<div class="footer">
+			<span>
+				© 2022-2023 made with 💝 by <b>IMXNOOBX</b>
+			</span>
+			<br>
+			<small>
+				<a href="faq.html">Questions</a>
+				 |
+				<a href="https://github.com/IMXNOOBX">GitHub</a>
+				 |
+				<a href="https://discord.gg/eJH2hVGSKz">Donate</a>
+			</small>
+		</div>
+	</div>
+	<script>
+		function showPlayer() {
+			console.log(document.getElementById('player-id').value)
+			document.getElementById('search-result').innerHTML='<embed type="text/html" src="https://imxnoobx.xyz" width="95%"  max-height: "90%" height="500px" min-height: "500px">';
+		}
+	</script>
+</body>
+</html>
