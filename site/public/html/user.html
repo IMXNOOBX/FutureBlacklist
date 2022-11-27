@@ -8,20 +8,27 @@
 	<link rel="stylesheet" href="../css/style.css">
 	<link rel="stylesheet" href="../css/user.css">
 	<title>FutureDB</title>
+	<meta name="og:title" content="JustATitle">
 </head>
 <body>
 	<div class="bg-image"></div>
 	<div class="container">
-		<h1><span id="player-name"></span></h1>
-		<ul>
-			<li><span id="player-name"></span></li>
-			<li><span id="player-rid"></span></li>
-			<li><span id="player-note"></span></li>
-			<li><span id="player-modder"></span></li>
-			<li><span id="player-advertiser"></span></li>
-			<li><span id="player-last-seen"></span></li>
-			<li><span id="player-first-seen"></span></li>
-		</ul>
+		<div class="player-info">
+			<h1><span id="player-name"></span></h1>
+			<hr>
+			<ul>
+				<li>Username: <span id="player-name"></span></li>
+				<li>SCID: <span id="player-rid"></span></li>
+				<li>Note: <span id="player-note"></span></li>
+				<li>Modder: <span id="player-modder"></span></li>
+				<li>Advertiser: <span id="player-advertiser"></span></li>
+				<li>Last Seen: <span id="player-last-seen"></span></li>
+				<li>Fist Seen: <span id="player-first-seen"></span></li>
+			</ul>
+		</div>
+		<div class="error-noexist">
+			<h1>Player doesn't exist in the database.</h1>
+		</div>
 	</div>
 </body>
 </html>

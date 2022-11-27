@@ -59,8 +59,9 @@
 	</div>
 	<script>
 		function showPlayer() {
-			console.log(document.getElementById('player-id').value)
-			document.getElementById('search-result').innerHTML='<embed type="text/html" src="https://imxnoobx.xyz" width="95%"  max-height: "90%" height="500px" min-height: "500px">';
+			const textInput = document.getElementById('player-id').value;
+			// console.log(document.getElementById('player-id').value)
+			document.getElementById('search-result').innerHTML='<embed type="text/html" src="http://127.0.0.1:4000/user/'+textInput+'" width="95%"  max-height: "90%" height="500px" min-height: "500px">';
 		}
 	</script>
 </body>

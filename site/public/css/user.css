@@ -16,3 +16,12 @@
 	padding: 5px;
 	text-align: center;
 }
+
+.player-info {
+	/* visibility: hidden; */
+	display: none;
+}
+
+.player-info li {
+	text-align: left;
+}
