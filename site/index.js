@@ -58,9 +58,9 @@ if(config.debug)
 
 
 app.get('/', public.index);
+app.get('/user/:user', public.user)
 
 // app.get('/ip', (request, response) => response.send(request.ip))
-// app.get('/api/v0/user/:rid', v0.get_user)
 
 app.use(function(req, res, next) {
     // res.status(404).send({

@@ -1,13 +1,15 @@
 html,
 body {
   height: 100%;
-  margin: 0;
+  margin: 0px;
   font-family: 'Poppins', sans-serif;
   scroll-behavior: smooth;
   cursor: url("https://raw.githubusercontent.com/IMXNOOBX/imxnoobx.github.io/main/mouse/default.svg"), auto;
   transition: all .5s;
 }
 
+
+/* Important to keep everything together */
 * {
   box-sizing: border-box;
 }
@@ -17,8 +19,8 @@ body {
   background-image: url("../assets/nasa_space.png");
 
   /* Add the blur effect */
-  filter: blur(5px);
-  -webkit-filter: blur(5px);
+  /* filter: blur(5px);
+  -webkit-filter: blur(5px); */
 
   /* Full height */
   height: 100%;
@@ -27,12 +29,24 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   /* background-size: cover; */
-  overflow: hidden;
+  /* overflow: hidden; */
+  pointer-events: none; 
 
   background-position: 0px 0px;
   background-repeat: repeat-x;
   animation: animatedBackground 60s linear infinite alternate;
 }
+
+ /* https://stackoverflow.com/a/60492357/15384495 */
+.bg-image::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(5px); 
+  pointer-events: none; 
+}
+
 
 @keyframes animatedBackground {
   from {
@@ -157,6 +171,10 @@ body {
   text-decoration: none;
   background-color: transparent;
   height: 40px;
+}
+
+.content-search img {
+  filter: brightness(0) invert(1);
 }
 
 .content-search button:active {
