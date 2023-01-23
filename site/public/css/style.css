@@ -75,6 +75,8 @@ body {
   width: 95%;
   padding: 5px;
   text-align: center;
+
+  transition: all .5s;
 }
 
 .nav h1 {
@@ -133,6 +135,7 @@ body {
   width: 68%;
   padding: 5px;
   text-align: center;
+  transition: all .5s;
 }
 
 
@@ -182,10 +185,21 @@ body {
 
 }
 
+.conten-data {
+  text-align: left;
+
+}
 
 .content-result {
   margin: 20px;
   padding-top: 60px;
+}
+.questions {
+  color: rgba(255, 255, 255, 1);
+}
+.answers {
+  color: rgb(175, 175, 175);
+  font-weight:lighter;
 }
 
 .stats {
@@ -205,6 +219,7 @@ body {
   width: 25%;
   padding: 5px;
   text-align: center;
+  transition: all .5s;
 }
 
 .stats ul {
@@ -238,4 +253,69 @@ body {
   font-size: 11px;
   text-decoration: none;
   color: rgb(123, 154, 255);
+}
+
+
+@media (max-width:800px){
+
+  .stats {
+    display: none;
+  }
+
+  .content {
+    width: 95%;
+    top: calc(15% + 25px);
+    left: 50%;
+    transform: translate(-50%);
+  }
+}
+
+@media (max-width:710px){
+  .content {
+    top: calc(15% + 40px);
+  }
+
+  .nav h1 {
+    float: none;
+    text-align: center;
+  }
+
+  .nav {
+    text-align: center;
+    float: none; 
+    /* display: none; */
+    padding: 15px;
+  }
+
+  .nav a {
+    text-align: center;
+    float: none; 
+    /* display: none; */
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 25px;
+    padding-right: 25px;
+
+    margin: 5px;
+    font-size: 15px
+  }
+}
+
+@media (max-width:500px){
+  
+  .nav {
+    text-align: center;
+    float: none; 
+    /* display: none; */
+    padding: 10px;
+  }
+
+  .nav a {
+    text-align: center;
+    float: none; 
+    /* display: none; */
+    padding: 10px;
+    margin: 10px;
+    font-size: 15px
+  }
 }

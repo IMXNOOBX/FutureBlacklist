@@ -3,7 +3,7 @@ exports.index = function (req, res) {
     let fs = req.app.get('fs');
     let cheerio = req.app.get('cheerio');
     let database_stats = req.app.get('db_stats');
-    // console.log(database_stats)
+    console.log(database_stats)
     fs.readFile('public/html/index.html', 'utf8', function(err, data) {
         if (err) throw err;
         var $ = cheerio.load(data);
@@ -48,7 +48,7 @@ exports.user = function (req, res) {
             if (err) throw err;
             var $ = cheerio.load(file);
 
-            console.log($('meta[property="og:title"]').attr('content'))
+            // console.log($('meta[property="og:title"]').attr('content'))
 
             $('.player-info').css('display','block');
             $('.error-noexist').css('display','none');

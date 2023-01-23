@@ -6,7 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/x-icon" href="../assets/icon.jpg">
 	<link rel="stylesheet" href="../css/style.css">
-	<title>FutureDB</title>
+	<title>FutureDB | API</title>
 </head>
 <body>
 	<div class="bg-image"></div>
@@ -24,13 +24,11 @@
 		<div class="content">
 			<h2>Find/Search Players</h2>
 			<hr>
-			<div class="content-search">
-				<input id="player-id" type="text" placeholder="Search player by rid/name">
-				<button type="submit" onClick="showPlayer()"><img src="../assets/icons8-search-32.png" alt="search"></img></button>
-			</div>
-			<div class="content-result">
-				<div id="search-result"></div>
-			</div>
+			<ul>
+				<li>Total Players: <span id="total-players">Loading...</span></li>
+				<li>Legit Players: <span id="legit-players">Loading...</span></li>
+				<li>Modders: <span id="modder-players">Loading...</span></li>
+			</ul>
 		</div>
 		<div class="stats">
 			<h2>Database Stats</h2>

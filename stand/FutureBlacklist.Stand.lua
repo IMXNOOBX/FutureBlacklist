@@ -2,7 +2,7 @@
 util.require_natives(1660775568)
 util.keep_running()
 local json
-local path_root = filesystem.scripts_dir() .."FBL/"
+local path_root = filesystem.scripts_dir() .."lib/FBL/"
 
 if not filesystem.exists(path_root .. "FBL") then filesystem.mkdir(path_root) end
 if(not filesystem.exists(path_root..'json.lua')) then
