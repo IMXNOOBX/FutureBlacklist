@@ -190,6 +190,20 @@ body {
 
 }
 
+.api-content {
+  list-style-type: none;
+  display: list-item;
+  text-align: left;
+  /* padding: 10px; */
+}
+
+.code-snippet {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1em;
+  color: rgb(175, 175, 175);
+}
+
+
 .content-result {
   margin: 20px;
   padding-top: 60px;
