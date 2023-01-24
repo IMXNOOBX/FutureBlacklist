@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 var path = require('path');
 var fs = require('fs');
 var schedule = require('node-schedule');
+var cookieParser = require('cookie-parser')
 // const PoolManager = require('mysql-connection-pool-manager'); // https://www.npmjs.com/package/mysql-connection-pool-manager
 const config = require('./config.json')
 const public = require("./routes/public")
@@ -27,8 +28,21 @@ const public_limiter = rl({
     }
 })
 
+const quick_limiter = rl({
+	windowMs: 1 * 1000, // 1 minutes
+	max: 5, // Limit each IP to 100 requests per `window` (here, 15 minutes)
+    handler: function (req, res) {
+        return res.status(429).json({
+          error: 'You sent too many requests. Please wait a while and then try again.'
+        })
+    }
+})
+
+
 app.use(public_limiter)
+app.use(quick_limiter)
 app.use(express.json())
+app.use(cookieParser());
 
 const db = mysql.createConnection({
 	host     : config.db.host,
@@ -43,6 +57,7 @@ app.set('cheerio', cheerio);
 app.set('config', config);
 app.set('path', path);
 app.set('fs', fs);
+app.set('cookie', cookieParser);
 app.set('schedule', schedule);
 app.set('trust proxy', 2); //https://github.com/express-rate-limit/express-rate-limit/issues/165
 app.use(express.static("public")); // https://stackoverflow.com/a/38757303/15384495
@@ -59,14 +74,11 @@ if(config.debug)
 
 app.get('/', public.index);
 app.get('/user/:user', public.user)
+app.get('/key/:key', public.set_cookie)
 
 // app.get('/ip', (request, response) => response.send(request.ip))
 
 app.use(function(req, res, next) {
-    // res.status(404).send({
-    //     message: `Invalid endpoint.`,
-	// 	success: false
-    // });
 	res.status(404).sendFile(path.resolve('public/html/404.html'))
 });
 

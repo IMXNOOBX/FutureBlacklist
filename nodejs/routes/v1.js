@@ -1,7 +1,7 @@
 exports.exist = function (req, res) {
     let db = req.app.get('db');
     let rid = req.params.rid
-
+    // fix sql injection
     db.query(`SELECT * FROM PLAYERS WHERE rid=${rid} LIMIT 0, 1`, (asw, msg) => {
         return res.send({
             exist: asw?.length == 0 ? false : asw[0].whitelist == 1 ? false : true,
@@ -13,7 +13,7 @@ exports.exist = function (req, res) {
 exports.get_user = function (req, res) {
     let db = req.app.get('db');
     let rid = req.params.rid
-
+    // fix sql injection
     db.query(`SELECT * FROM PLAYERS WHERE rid=${rid}`, (asw, msg) => {
         if (asw?.length == 0 || asw[0].whitelist == 1)
             return res.send({
@@ -24,7 +24,7 @@ exports.get_user = function (req, res) {
         asw = asw[0]
         return res.send({
             data: {
-                rokcstar_id: asw.rid,
+                rockstar_id: asw.rid,
                 rockstar_name: asw.name,
                 player_note: asw.note,
                 is_modder: asw.modder == 1 ? true : false,
@@ -37,4 +37,19 @@ exports.get_user = function (req, res) {
             success: true,
         })
     });
+};
+
+exports.stats = function (req, res) {
+    let stats = req.app.get('stats');
+
+    return res.send({
+        data: {
+            total_players: stats.total_players,
+            legit_players: stats.legit_players,
+            modders: stats.modder_players,
+            advertisers: stats.advertiser_players,
+        },
+        message: "Succesfully retrieved data from the database.",
+        success: true,
+    })
 };

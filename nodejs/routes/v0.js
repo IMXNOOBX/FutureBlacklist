@@ -1,3 +1,4 @@
+// fix sql injection
 exports.get_user = function (req, res) {
     let db = req.app.get('db');
     let rid = req.params.rid
@@ -115,7 +116,7 @@ exports.insert = async function (req, res) {
                     })
                 });
             } else if (advertiser == 1) {
-                db.query(`UPDATE PLAYERS SET ip='${ip}', times_seen = times_seen+1, last_seen='${date}', note='${note}', advertiser=${advertiser} WHERE rid=${rid}`, (asw, msg) => {
+                db.query(`UPDATE PLAYERS SET ip='${ip}', times_seen = times_seen+1, last_seen='${date}', note='${note}', advertiser='${advertiser}' WHERE rid=${rid}`, (asw, msg) => {
                     if (msg != null)
                         return res.send({
                             message: `Error updating advertiser ${name}`,
