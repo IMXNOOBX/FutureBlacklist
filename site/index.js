@@ -6,6 +6,7 @@ var path = require('path');
 var fs = require('fs');
 var schedule = require('node-schedule');
 var cookieParser = require('cookie-parser')
+const sqlinjection = require('sql-injection');
 // const PoolManager = require('mysql-connection-pool-manager'); // https://www.npmjs.com/package/mysql-connection-pool-manager
 const config = require('./config.json')
 const public = require("./routes/public")
@@ -38,7 +39,7 @@ const quick_limiter = rl({
     }
 })
 
-
+app.use(sqlinjection);
 app.use(public_limiter)
 app.use(quick_limiter)
 app.use(express.json())
