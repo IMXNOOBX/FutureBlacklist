@@ -2,6 +2,7 @@ const express = require('express')
 const rl = require('express-rate-limit')
 // const express = require('mysql')
 const PoolManager = require('mysql-connection-pool-manager'); // https://www.npmjs.com/package/mysql-connection-pool-manager
+const sqlinjection = require('sql-injection');
 const config = require('./config.json')
 const v0 = require("./routes/v0"),
 	v1 = require('./routes/v1')
@@ -30,6 +31,7 @@ const uploader_limiter = rl({
     }
 })
 
+app.use(sqlinjection);
 app.use('/api/v1', public_limiter)
 app.use('/api/v0', uploader_limiter)
 app.use(express.json())
