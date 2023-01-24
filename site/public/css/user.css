@@ -25,3 +25,22 @@
 .player-info li {
 	text-align: left;
 }
+
+.player-info button {
+  float: right;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  background-color: transparent;
+  height: 40px;
+}
+
+/*.player-info button:hover {*/
+/*    transform: rotate(180deg);*/
+/*   -webkit-transform: rotate(180deg);*/
+/*   -ms-transform: rotate(180deg);*/
+/*}*/
+
+.player-info img {
+  filter: brightness(0) invert(1);
+}

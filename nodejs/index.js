@@ -73,6 +73,7 @@ const options = {
 const db = PoolManager(options);
 
 app.set('db', db);
+app.set('stats', {});
 app.set('config', config);
 app.set('check_key', check_key);
 app.set('user_exist', user_exist);
@@ -104,6 +105,7 @@ if(config.debug)
 
 // app.get('/ip', (request, response) => response.send(request.ip))
 
+app.get('/api/v1/stats', v1.stats)
 app.get('/api/v1/user/:rid', v1.get_user)
 app.get('/api/v1/user/exist/:rid', v1.exist)
 

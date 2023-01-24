@@ -6,6 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/x-icon" href="../assets/icon.jpg">
 	<link rel="stylesheet" href="../css/style.css">
+	<meta property="og:url" content="https://futuredb.shop/">
+	<meta property="og:title" content="Future DB">
+	<meta property="og:image" content="https://futuredb.shop/assets/icon.jpg">
+	<meta property="og:description" content="This project is a gta5 player database. Its main pourpose is to blacklist modders and spammers.">
 	<title>FutureDB</title>
 </head>
 <body>
@@ -16,8 +20,8 @@
 			<div class="nav-btn"> 
 				<!-- float right, the order goes backwards -->
 				<a target="_blank" href="https://discord.gg/eJH2hVGSKz" style="color: #7289DA">Discord</a>
-				<a href="faq.html">FAQ</a>
-				<a href="api.html">API</a>
+				<a href="#faq">FAQ</a>
+				<a href="#api">API</a>
 				<a href="#home">Home</a>
 			</div>
 		</div>
@@ -42,6 +46,19 @@
 				<li>Advertisers: <span id="advertiser-players">Loading...</span></li>
 			</ul>
 		</div>
+		<div class="auth">
+			<div class="auth-toggle">
+				<button onClick="togglePopUp()"><img src="../assets/icons8-llave-24.png" alt="Key"></img></button>
+			</div>
+			<div id="auth-popup" class="auth-popup">
+				<div class="auth-popup-bg">
+					<h2>Developer Key</h2>
+					<hr>
+						<input id="developer-key" type="text" placeholder="Developer key">
+						<button type="submit" onClick="saveCookieKey()"><img src="../assets/icons8-llave-24.png" alt="Key"></img></button>
+				</div>
+			</div>
+		</div>
 		<!-- <img src="../assets/icon.jpg" alt="asd"> -->
 		<div class="footer">
 			<span>
@@ -58,10 +75,49 @@
 		</div>
 	</div>
 	<script>
+		var input = document.getElementById("player-id");
+		var popup = document.getElementById('auth-popup')
+		var prevent_spam = false
+		var popup_status = false;
+
 		function showPlayer() {
 			const textInput = document.getElementById('player-id').value;
 			// console.log(document.getElementById('player-id').value)
-			document.getElementById('search-result').innerHTML='<embed type="text/html" src="user/'+textInput+'" width="95%"  max-height="50%" height="300px" min-height="20%">';
+			document.getElementById('search-result').innerHTML='<embed type="text/html" src="user/'+textInput+'" width="95%"  max-height="50%" height="400px" min-height="20%">';
+		}
+		
+		input.addEventListener("keypress", function(event) {
+			// If the user presses the "Enter" key on the keyboard
+			if (event.key === "Enter" && !prevent_spam) {
+			  // Cancel the default action, if needed
+			  event.preventDefault();
+			  showPlayer()
+			  prevent_spam = true
+			} else if (event.key != "Enter") {
+				prevent_spam = false
+			}
+			// console.log(prevent_spam)
+			// console.log(event.key)
+		  });
+
+		function togglePopUp() {
+			popup_status = !popup_status
+			if(popup_status)
+				popup.style.display = 'block'
+			else
+				popup.style.display = 'none'
+		}
+
+		function saveCookieKey() {
+			var dev_key = document.getElementById('developer-key').value
+			fetch('https://futuredb.shop/key/'+dev_key)
+				.then((response) => response.json())
+				.then((data) => {
+					if(data.success)
+						popup.style.display = 'none'
+					else
+						dev_key = data.message
+				});
 		}
 	</script>
 </body>
