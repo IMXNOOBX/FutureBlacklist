@@ -2,12 +2,11 @@ const express = require('express')
 const rl = require('express-rate-limit')
 // const express = require('mysql')
 const PoolManager = require('mysql-connection-pool-manager'); // https://www.npmjs.com/package/mysql-connection-pool-manager
+var schedule = require('node-schedule');
 const sqlinjection = require('sql-injection');
 const config = require('./config.json')
 const v0 = require("./routes/v0"),
 	v1 = require('./routes/v1')
-const check_key = require('./utils/key')
-const user_exist = require('./utils/exist')
 
 const app = express()
 
@@ -75,11 +74,16 @@ const options = {
 const db = PoolManager(options);
 
 app.set('db', db);
-app.set('stats', {});
+app.set('stats', {
+	total_players: 0,
+	legit_players: 0,
+	modder_players: 0,
+	advertiser_players: 0,
+});
 app.set('config', config);
-app.set('check_key', check_key);
-app.set('user_exist', user_exist);
+app.set('schedule', schedule);
 app.set('trust proxy', 2); //https://github.com/express-rate-limit/express-rate-limit/issues/165
+require("./utils")(app)
 
 db.query("CREATE TABLE IF NOT EXISTS PLAYERS (rid INTEGER NOT NULL PRIMARY KEY, name TEXT, ip TEXT, note TEXT, modder INTEGER DEFAULT 0, advertiser INTEGER DEFAULT 0, risk INTEGER DEFAULT 0, whitelist INTEGER DEFAULT 0, times_seen INTEGER DEFAULT 0, last_seen TEXT, first_seen TEXT, added_by TEXT NOT NULL)", (res, msg) => {
 	// console.log(res,msg);
@@ -91,6 +95,7 @@ db.query("CREATE TABLE IF NOT EXISTS USER (key_auth VARCHAR(50) NOT NULL PRIMARY
 app.get('/', (req, res) => {
     res.send({
 		endpoints: {
+			"v1_stats": "/api/v1/stats",
 			"v1_get_user": "/api/v1/user/<rid>",
 			"v1_user_exists": "/api/v1/users/exist/<rid>",
         },

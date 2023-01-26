@@ -6,6 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/x-icon" href="../assets/icon.jpg">
 	<link rel="stylesheet" href="../css/style.css">
+	<meta property="og:url" content="https://futuredb.shop/">
+	<meta property="og:title" content="Future DB">
+	<meta property="og:image" content="https://futuredb.shop/assets/icon.jpg">
+	<meta property="og:description" content="This project is a gta5 player database. Its main pourpose is to blacklist modders and spammers.">
 	<title>FutureDB | API</title>
 </head>
 <body>
@@ -16,19 +20,70 @@
 			<div class="nav-btn"> 
 				<!-- float right, the order goes backwards -->
 				<a target="_blank" href="https://discord.gg/eJH2hVGSKz" style="color: #7289DA">Discord</a>
-				<a href="faq.html">FAQ</a>
-				<a href="api.html">API</a>
-				<a href="#home">Home</a>
+				<a href="./faq">FAQ</a>
+				<a href="./api">API</a>
+				<a href="./">Home</a>
 			</div>
 		</div>
 		<div class="content">
-			<h2>Find/Search Players</h2>
+			<h2>API Endpoints</h2>
 			<hr>
 			<ul class="api-content">
 				<li>Host: <a href="https://futuredb.shop" target="_blank">api.futuredb.shop</a></li>
-				<li>GET <span class="code-snippet">/api/v1/user/:rid</span></li>
-				<li>GET <span class="code-snippet">/api/v1/user/exist/:rid</span></li>
-
+				<li>GET <span class="code-snippet">/api/v1/user/:rid</span>
+				<br>
+				<span class="code-desc">
+					Get info about a player registered in the database.<br>
+					Rate Limit: 100/m<br>
+					Response: <br>
+					<div class="json-snippet">
+						<span class="key">{</span><br>
+						<span class="key">  "data": </span> <span class="key">{</span><br>
+						<span class="key">    "rockstar_id": </span> <span class="number">00000000</span>,<br>
+						<span class="key">    "rockstar_name": </span> <span class="string">"Username"</span>,<br>
+						<span class="key">    "player_note": </span> <span class="string">"Midnight modder detection."</span>,<br>
+						<span class="key">    "is_modder": </span> <span class="bool">true</span>,<br>
+						<span class="key">    "advertiser": </span> <span class="bool">false</span>,<br>
+						<span class="key">    "risk": </span> <span class="number">0</span>,<br>
+						<span class="key">    "last_seen": </span> <span class="string">"1673100345344"</span>,<br>
+						<span class="key">    "first_seen": </span> <span class="string">"1670628874694"</span><br>
+						<span class="key">  },</span><br>
+						<span class="key">  "message": </span> <span class="string">"Succesfully retrieved data from the database."</span>,<br>
+						<span class="key">  "success": </span> <span class="bool">true</span><br>
+						<span class="key">}</span>
+					</div>
+				</span>
+				</li>
+				<li>GET <span class="code-snippet">/api/v1/user/exist/:rid</span>
+				<br>
+				<span class="code-desc">
+					Check if the user exist in the database<br>
+					Rate Limit: 100/m<br>
+					Response: <br>
+					<div class="json-snippet">
+						<span class="key">{</span><br>
+						<span class="key">  "exist": </span> <span class="bool">true</span><br>
+						<span class="key">  "success": </span> <span class="bool">true</span><br>
+						<span class="key">}</span>
+					</div>
+				</span>
+				</li>
+				<li>GET <span class="code-snippet">/api/v1/stats</span>
+					<br>
+					<span class="code-desc">
+						Check the stats about the database<br>
+						Rate Limit: 100/m<br>
+						Response: <br>
+						<div class="json-snippet">
+							<span class="key">data: </span> <span class="key">{</span><br>
+							<span class="key">    total_players: </span> <span class="value">stats.total_players</span>,<br>
+							<span class="key">    legit_players: </span> <span class="value">stats.legit_players</span>,<br>
+							<span class="key">    modders: </span> <span class="value">stats.modder_players</span>,<br>
+							<span class="key">    advertisers: </span> <span class="value">stats.advertiser_players</span>,<br>
+							<span class="key">},</span>
+						</div>
+					</span>
+				</li>
 			</ul>
 		</div>
 		<div class="stats">

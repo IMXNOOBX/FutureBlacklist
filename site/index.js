@@ -74,6 +74,11 @@ if(config.debug)
 
 
 app.get('/', public.index);
+app.get('/index.html', public.index);
+app.get('/faq', public.faq);
+app.get('/faq.html', public.faq);
+app.get('/api', public.api);
+app.get('/api.html', public.api);
 app.get('/user/:user', public.user)
 app.get('/key/:key', public.set_cookie)
 
