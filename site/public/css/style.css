@@ -136,6 +136,8 @@ body {
   padding: 5px;
   text-align: center;
   transition: all .5s;
+  overflow: auto;
+  max-height: 70%;
 }
 
 
@@ -186,7 +188,19 @@ body {
 /*}*/
 
 .conten-data {
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
   text-align: left;
+}
+
+.question {
+  font-weight: bold;
+  color: #2ac3ff;
+}
+.answers {
+  font-weight: lighter;
+  color: #8fffb4;
+  /* margin-left: 10px; */
 }
 
 .api-content {
@@ -195,13 +209,42 @@ body {
   text-align: left;
   /* padding: 10px; */
 }
-
+.api-content li {
+  margin-bottom: 30px;
+}
 .code-snippet {
   font-family: "Courier New", Courier, monospace;
   font-size: 1em;
-  color: rgb(175, 175, 175);
+  color: rgb(158, 158, 158);
 }
 
+.json-snippet {
+  margin-right: 50px;
+  border-radius: 5px;
+  background-color: #525252;
+  padding: 20px;
+  font-family: monospace;
+  /* padding-left: 40px; this will add 40px of indentation to the left of each line */
+}
+.key {
+  color: #32e5f1;
+}
+.bool {
+  color: #1b89e4;
+}
+.string {
+  color: #ff4d17;
+}
+.number {
+  color: #32cc32;
+}
+
+.code-desc {
+  /* margin-left: 30px; */
+  /* text-indent: 50px; */
+  font-size: 1em;
+  color: rgb(211, 211, 211);
+}
 
 .content-result {
   margin: 20px;
@@ -451,4 +494,27 @@ body {
     margin: 7px;
     font-size: 12px
   }
+}
+
+/* Change the width and height of the scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Change the color of the scrollbar thumb */
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+/* Change the color of the scrollbar track */
+::-webkit-scrollbar-track {
+  background: #222;
+  border-radius: 10px;
+}
+
+/* Add a hover effect on the scrollbar thumb */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

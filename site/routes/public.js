@@ -23,6 +23,52 @@ exports.index = function (req, res) {
 
     // res.sendFile(path.resolve('public/html/index.html'))
 };
+exports.faq = function (req, res) {
+    let path = req.app.get('path');
+    let fs = req.app.get('fs');
+    let cheerio = req.app.get('cheerio');
+    let database_stats = req.app.get('db_stats');
+    // console.log(database_stats)
+    fs.readFile('public/html/faq.html', 'utf8', function(err, data) {
+        if (err) throw err;
+        var $ = cheerio.load(data);
+        var normalDesc = $("meta[property='og:description']").attr("content")
+        
+         $("meta[property='og:description']").attr("content", normalDesc + " Total Players: "+database_stats.total_players + ", Total Modders: "+database_stats.modder_players + ", Total Advertisers: "+database_stats.advertiser_players)
+        
+        $('#total-players').text(database_stats.total_players);
+        $('#legit-players').text(database_stats.legit_players);
+        $('#modder-players').text(database_stats.modder_players);
+        $('#advertiser-players').text(database_stats.advertiser_players);
+        // console.log($.html());
+        return res.send($.html())
+    });
+
+    // res.sendFile(path.resolve('public/html/index.html'))
+};
+exports.api = function (req, res) {
+    let path = req.app.get('path');
+    let fs = req.app.get('fs');
+    let cheerio = req.app.get('cheerio');
+    let database_stats = req.app.get('db_stats');
+    // console.log(database_stats)
+    fs.readFile('public/html/api.html', 'utf8', function(err, data) {
+        if (err) throw err;
+        var $ = cheerio.load(data);
+        var normalDesc = $("meta[property='og:description']").attr("content")
+        
+         $("meta[property='og:description']").attr("content", normalDesc + " Total Players: "+database_stats.total_players + ", Total Modders: "+database_stats.modder_players + ", Total Advertisers: "+database_stats.advertiser_players)
+        
+        $('#total-players').text(database_stats.total_players);
+        $('#legit-players').text(database_stats.legit_players);
+        $('#modder-players').text(database_stats.modder_players);
+        $('#advertiser-players').text(database_stats.advertiser_players);
+        // console.log($.html());
+        return res.send($.html())
+    });
+
+    // res.sendFile(path.resolve('public/html/index.html'))
+};
 
 
 exports.user = function (req, res) {
@@ -53,16 +99,16 @@ exports.user = function (req, res) {
                     $('.error-noexist').css('display','none');
                     $('#player-name').text(data.name);
                     $('#player-rid').text(data.rid);
-                    if(userid?.length > 0) $('#player-data1').text("IP Address: "+ data.ip); else $('#player-data1').css('display','none');
+                    if(userid?.length > 0) $('#player-data1').text("IP Address: "+ data.ip); else $('#extra').css('display','none');
                     $('#player-note').text(data.note);
                     $('#player-modder').text(data.modder == 1 ? "Yes" : "No");
                     $('#player-modder').css('color',data.modder == 1 ? "red" : "green");
                     $('#player-advertiser').text(data.advertiser == 1 ? "Yes" : "No");
                     $('#player-advertiser').css('color',data.advertiser == 1 ? "red" : "green");
-                    if(userid?.length > 0)  $('#player-data2').text("Times Seen: "+ data.times_seen); else $('#player-data2').css('display','none');
+                    if(userid?.length > 0)  $('#player-data2').text("Times Seen: "+ data.times_seen);
                     $('#player-last-seen').text(new Date(new Number(data.last_seen)));
                     $('#player-first-seen').text(new Date(new Number(data.first_seen)));
-                    if(userid?.length > 0)  $('#player-data3').text("Added By: "+ data.added_by); else $('#player-data3').css('display','none');
+                    if(userid?.length > 0)  $('#player-data3').text("Added By: "+ data.added_by);
                     // console.log($.html());
                     return res.send($.html())
                 });
