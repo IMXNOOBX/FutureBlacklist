@@ -21,6 +21,8 @@ var con = mysql.createConnection({
 client.con = con;
 client.crypto = require("crypto");
 client.ms = require('ms');
+client.schedule = require('node-schedule');
+client.axios = require('axios');
 client.config = config; 
 client.log = new Webhook(client.config.utils.log_webhook);
 
@@ -32,6 +34,7 @@ client.commands.normal.aliases = new Discord.Collection();
 client.commands.buttons = new Discord.Collection();
 client.commands.menus = new Discord.Collection();
 client.commands.slash = new Discord.Collection();
+require('./utils')(client);
 
 
 // Creating Command Handler Handler
