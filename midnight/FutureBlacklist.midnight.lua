@@ -2,10 +2,11 @@ local root = fs.get_dir_script()..'/'
 local json = fs.file_exists(root .. 'lib/json.lua') and require("lib/json") or print('json lib not found') -- download: https://github.com/IMXNOOBX/ScriptKid/blob/main/lib/json.lua
 
 local config = {
-    reaction = '', -- Dont put anything if you dont want to react to them
+    reaction = 'block_join', -- Dont put anything if you dont want to react to them, else use: block_join
     exclude_frieds = true,
     notifications = true,
-    timeout = 1500, -- Timeout before checking the next player. low values such as less that 200 mmight crash your game
+    player_flags = true,
+    timeout = 1500, -- Timeout before checking the next player. low values such as less that 200 might crash your game
 	
 	x_add = 20,
 	y_add = 10,
@@ -63,9 +64,9 @@ local utl = {
             return callback(nil)
         end)
     end,
-    flag_id = player.flags.create(function(ply)
+    flag_id = config.player_flags and player.flags.create(function(ply)
         return script.blacklisted_player[ply] and script.blacklisted_player[ply] or false
-    end, 'FB', 'Blacklisted Modder/Advertiser', 255, 0, 0) -- i think it works like this, not documented
+    end, 'FB', 'Blacklisted Modder/Advertiser', 255, 0, 0) or nil -- i think it works like this, not documented
 }
 
 function OnFeatureTick()
