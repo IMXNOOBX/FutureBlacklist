@@ -202,13 +202,6 @@ function OnFrame()
 	local mw, mh = menu.get_main_menu_size_x(), menu.get_main_menu_size_y()
 
 	local rounding = menu.get_window_rounding()
-	local pools = {
-		vehicles = pools.get_all_vehicles(),
-		peds = pools.get_all_peds(),
-		objects = pools.get_all_objects(),
-		entities = pools.get_all_ents(),
-		pickups = pools.get_all_pickups()
-	}	
 
 	-- -- Background
 	draw.set_rounding(rounding)
