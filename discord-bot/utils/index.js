@@ -2,8 +2,8 @@ module.exports = function (client) {
 
 
 	function sendStatsData() {
-		client.axios.get('https://api.futuredb.shop/api/v1/stats').then(resp => {
-			if (!resp) return;
+		client.axios.get('https://api.futuredb.shop/api/v1/stats').then(async (resp) => {
+			if (!resp) return; resp = resp.data
 			if (!resp.success) return;
 
 			let embed = new client.discord.EmbedBuilder()
@@ -16,7 +16,9 @@ module.exports = function (client) {
 					{ name: '**Advertiser Players**', value: `**${resp.data.advertisers}**`, inline: true },
 				)
 
-			client.channels.fetch(client.config.stats_channel).send({  
+			const channel = await client.channels.cache.get(client.config.stats_channel)
+			if (!channel) return client.log.console('Error finding stats channel, please fix.')
+			channel.send({  
 				embeds: [embed]
 			})
 		});
@@ -25,5 +27,5 @@ module.exports = function (client) {
 	client.schedule.scheduleJob('0 0 * * *', function () {  // https://crontab.guru/#0_0_*_*_*
 		sendStatsData()
 	});
-	sendStatsData()
+	setTimeout(sendStatsData, 5000) // wait for the bot to load up
 };
