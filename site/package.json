@@ -17,6 +17,7 @@
     "express-rate-limit": "^6.7.0",
     "moment": "^2.29.4",
     "mysql": "^2.18.1",
-    "node-schedule": "^2.1.0"
+    "node-schedule": "^2.1.0",
+    "sql-injection": "^0.0.7"
   }
 }
