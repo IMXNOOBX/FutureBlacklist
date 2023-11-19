@@ -2,7 +2,7 @@ module.exports = function (client) {
 
 
 	function sendStatsData() {
-		client.axios.get('https://api.futuredb.shop/api/v1/stats').then(async (resp) => {
+		client.axios.get('https://gtaapi.imxnoobx.com/api/v1/stats').then(async (resp) => {
 			if (!resp) return; resp = resp.data
 			if (!resp.success) return;
 

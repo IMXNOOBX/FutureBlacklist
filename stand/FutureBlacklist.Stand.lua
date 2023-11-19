@@ -25,7 +25,7 @@ end
 
 local script = {
 	developer_key = '',
-	host = "https://api.futuredb.shop",
+	host = "https://gtaapi.imxnoobx.com",
 
 	friend_handle_ptr = memory.alloc(13*8),
 
