@@ -199,15 +199,15 @@ local modder_action = menu.add_feature("Reaction To Modders", "autoaction_value_
 	if (settings.developer_mode) then functions.notify('[Dev] Reaction To Modders > ' .. tostring(val.value)) end
 end)
 -- modder_action.value = settings.modder_opt
-settings.modder_opt = modder_action.value 
+-- settings.modder_opt = modder_action.value 
 local advertiser_action = menu.add_feature("Reaction To Advertisers", "autoaction_value_str", root.id, function(val)
 	settings.advertiser_opt = val.value
 	if (settings.developer_mode) then functions.notify('[Dev] Reaction To Advertisers > ' .. tostring(val.value)) end
 end)
 -- advertiser_action.value = settings.advertiser_opt
-settings.advertiser_opt = advertiser_action.value
-modder_action.str_data = {"Flag", "Kick & Flag"}
-advertiser_action.str_data = {"Flag", "Kick & Flag"}
+-- settings.advertiser_opt = advertiser_action.value
+modder_action.str_data = {"Flag", "Kick & Flag"}; modder_action.value = settings.modder_opt
+advertiser_action.str_data = {"Flag", "Kick & Flag"}; advertiser_action.value = settings.advertiser_opt
 
 
 

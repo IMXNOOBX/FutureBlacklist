@@ -158,14 +158,15 @@ local modder_action = menu.add_feature("Reaction To Modders", "autoaction_value_
 	settings.modder_opt = val.value
 end)
 -- modder_action.value = settings.modder_opt
-settings.modder_opt = modder_action.value 
+-- settings.modder_opt = modder_action.value 
 local advertiser_action = menu.add_feature("Reaction To Advertisers", "autoaction_value_str", root.id, function(val)
 	settings.advertiser_opt = val.value
 end)
 -- advertiser_action.value = settings.advertiser_opt
-settings.advertiser_opt = advertiser_action.value
-modder_action.str_data = {"Flag", "Kick & Flag"}
-advertiser_action.str_data = {"Flag", "Kick & Flag"}
+-- settings.advertiser_opt = advertiser_action.value
+modder_action.str_data = {"Flag", "Kick & Flag"}; modder_action.value = settings.modder_opt
+advertiser_action.str_data = {"Flag", "Kick & Flag"}; advertiser_action.value = settings.advertiser_opt
+
 
 
 event.add_event_listener("player_join", function(joined_player)
