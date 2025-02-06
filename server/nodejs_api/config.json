@@ -1,0 +1,10 @@
+{
+        "port": 4000,
+        "debug": true,
+        "db": {
+                "host": "localhost",
+                "user": "futureblacklist",
+                "password": "DBGBxZHzSDaFzCMF",
+                "database": "futureblacklist"
+        }
+}
